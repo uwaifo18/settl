@@ -11,8 +11,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'ArcTap — USDC Point of Sale',
-        short_name: 'ArcTap',
+        name: 'Settl — USDC Point of Sale',
+        short_name: 'Settl',
         description: 'Accept USDC payments on Arc Testnet. No backend, no custody.',
         display: 'standalone',
         orientation: 'portrait',

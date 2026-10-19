@@ -1,5 +1,5 @@
 /**
- * ArcTap — USDC Point of Sale on Arc Testnet
+ * Settl — USDC Point of Sale on Arc Testnet
  * Routes: / (merchant app), /pay (customer pay page)
  */
 

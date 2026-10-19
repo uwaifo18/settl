@@ -52,7 +52,7 @@ export default function MerchantSetup({ onSave, existing }: Props) {
           <Store className="h-7 w-7 text-white" />
         </div>
         <h1 className="display text-2xl font-bold" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
-          {existing ? 'Settings' : 'Set up ArcTap'}
+          {existing ? 'Settings' : 'Set up Settl'}
         </h1>
         <p className="mt-1 text-sm" style={{ color: 'var(--muted)' }}>
           {existing ? 'Update your merchant details' : 'Enter your receiving address to start accepting USDC payments'}

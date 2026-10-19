@@ -6,7 +6,7 @@
 import { get, set } from 'idb-keyval'
 import type { HistoryEntry } from './invoice'
 
-const HISTORY_KEY = 'arctap:history:v1'
+const HISTORY_KEY = 'settl:history:v1'
 const MAX_ENTRIES = 500
 
 export async function loadHistory(): Promise<HistoryEntry[]> {

@@ -5,7 +5,7 @@
 
 import { isAddress } from 'viem'
 
-const STORAGE_KEY = 'arctap:merchant:v1'
+const STORAGE_KEY = 'settl:merchant:v1'
 
 export interface MerchantSettings {
   address: `0x${string}`

@@ -1,4 +1,4 @@
-# ArcTap — USDC Point-of-Sale on Arc Testnet
+# Settl — USDC Point-of-Sale on Arc Testnet
 
 A merchant opens this Progressive Web App, types a USDC amount, and gets a QR code (plus NFC write on supported Android). The customer scans or taps, connects a wallet, and confirms. Arc's sub-second finality and USDC-as-gas mean the merchant screen flips to a big green **PAID** within about a second of the transaction landing. No backend, no custody, no merchant keys on the device.
 
@@ -17,8 +17,8 @@ Browser (merchant)          Browser (customer)
        |                             |
    watcher.ts               wagmi + ConnectKit
   (viem WS/HTTP)                  |
-       |                   ArcTapRouter.pay()
-       +------>  ArcTapRouter  <------+
+       |                   SettlRouter.pay()
+       +------>  SettlRouter  <------+
                 (Arc Testnet)
                      |
               USDC.safeTransferFrom
@@ -72,7 +72,7 @@ Use the **Get test USDC** button in Arc Studio's sidebar, or visit https://fauce
 
 ## Contract
 
-**ArcTapRouter** is deployed on Arc Testnet:
+**SettlRouter (ArcTapRouter)** is deployed on Arc Testnet:
 - Address: `0x6216af3fb64d039b87088f78da38bd641d62b426`
 - Tx: `0x1a4b8808443627f397f113970c1b034e96f6591456247834b26e836b7ee870cb`
 - Explorer: https://explorer.testnet.arc.io/address/0x6216af3fb64d039b87088f78da38bd641d62b426
@@ -137,7 +137,7 @@ All 12 tests pass — happy path, event args, balance delta, expired deadline, d
 
 ## 60-Second Demo Script
 
-1. Open the app on your phone and tap **Set up ArcTap**
+1. Open the app on your phone and tap **Set up Settl**
 2. Paste your Arc Testnet wallet address (get one from MetaMask) and tap **Start Accepting Payments**
 3. Type `1.00` and tap **Charge $1.00 USDC**
 4. A QR code appears — scan it with a second phone (or the same device)

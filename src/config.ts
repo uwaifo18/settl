@@ -16,9 +16,9 @@ const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID as 
 
 const connectors = [
   injected(),
-  coinbaseWallet({ appName: 'ArcTap' }),
+  coinbaseWallet({ appName: 'Settl' }),
   ...(walletConnectProjectId
-    ? [walletConnect({ projectId: walletConnectProjectId, metadata: { name: 'ArcTap', description: 'USDC Point of Sale on Arc', url: 'https://arctap.app', icons: [] } })]
+    ? [walletConnect({ projectId: walletConnectProjectId, metadata: { name: 'Settl', description: 'USDC Point of Sale on Arc', url: 'https://settl.app', icons: [] } })]
     : []),
 ]
 
