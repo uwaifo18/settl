@@ -26,7 +26,10 @@ import {
 } from '@/lib/memo'
 
 const ARC_TESTNET_CHAIN_ID = 5042002
-const ROUTER_ADDRESS = (import.meta.env.VITE_ROUTER_ADDRESS ?? '') as `0x${string}`
+// Fallback to the deployed address if env var is not set at build time
+const ROUTER_ADDRESS = (
+  import.meta.env.VITE_ROUTER_ADDRESS || '0x6216af3fb64d039b87088f78da38bd641d62b426'
+) as `0x${string}`
 const USDC_ADDRESS = '0x3600000000000000000000000000000000000000' as const
 
 function InlineError({ message }: { message: string }) {

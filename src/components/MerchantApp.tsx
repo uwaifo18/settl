@@ -18,7 +18,10 @@ import { loadMerchantSettings, saveMerchantSettings, clearMerchantSettings, type
 import { saveHistoryEntry, updateHistoryEntry } from '@/lib/history'
 import { celebratePayment, playPaymentChime } from '@/lib/audio'
 
-const ROUTER_ADDRESS = (import.meta.env.VITE_ROUTER_ADDRESS ?? '') as `0x${string}`
+// Fallback to the deployed address if env var is not set at build time
+const ROUTER_ADDRESS = (
+  import.meta.env.VITE_ROUTER_ADDRESS || '0x6216af3fb64d039b87088f78da38bd641d62b426'
+) as `0x${string}`
 
 // Base URL for pay links
 function getBaseUrl(): string {
