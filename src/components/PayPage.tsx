@@ -18,6 +18,12 @@ import TestnetBanner from './TestnetBanner'
 import { decodeInvoiceHash, isInvoiceExpired, formatCountdown, secondsUntilDeadline } from '@/lib/invoice'
 import { formatUsdcDisplay, formatAddress, LARGE_AMOUNT_THRESHOLD } from '@/lib/amount'
 import { buildTxExplorerUrl } from '@/onchain-facts'
+import {
+  MEMO_CONTRACT_ADDRESS,
+  MEMO_ABI,
+  encodeMemoData,
+  encodePayCalldata,
+} from '@/lib/memo'
 
 const ARC_TESTNET_CHAIN_ID = 5042002
 const ROUTER_ADDRESS = (import.meta.env.VITE_ROUTER_ADDRESS ?? '') as `0x${string}`
@@ -158,22 +164,30 @@ export default function PayPage() {
     setTxPhase('paying')
     setErrorMsg('')
 
+    // Encode ArcTapRouter.pay() calldata for the Memo wrapper
+    const payCalldata = encodePayCalldata(
+      invoice.invoiceId,
+      invoice.merchant,
+      invoice.amount,
+      BigInt(invoice.deadline)
+    )
+
+    // Encode memo payload: business name + note stored permanently onchain
+    const memoData = encodeMemoData({
+      businessName: invoice.name,
+      note: invoice.memo,
+      invoiceId: invoice.invoiceId,
+      amountUsdc: (Number(invoice.amount) / 1_000_000).toFixed(6),
+    })
+
+    // Call Memo.memo(router, payCalldata, invoiceId, memoData)
+    // This wraps router.pay() and emits a Memo event with the invoice metadata,
+    // preserving msg.sender so the router still sees the customer as payer.
     writePay({
-      address: ROUTER_ADDRESS,
-      abi: [{
-        type: 'function',
-        name: 'pay',
-        inputs: [
-          { name: 'invoiceId', type: 'bytes32' },
-          { name: 'merchant', type: 'address' },
-          { name: 'amount', type: 'uint256' },
-          { name: 'deadline', type: 'uint256' },
-        ],
-        outputs: [],
-        stateMutability: 'nonpayable',
-      }],
-      functionName: 'pay',
-      args: [invoice.invoiceId, invoice.merchant, invoice.amount, BigInt(invoice.deadline)],
+      address: MEMO_CONTRACT_ADDRESS,
+      abi: MEMO_ABI,
+      functionName: 'memo',
+      args: [ROUTER_ADDRESS, payCalldata, invoice.invoiceId, memoData],
       chainId: ARC_TESTNET_CHAIN_ID,
     }, {
       onSuccess: (hash) => {

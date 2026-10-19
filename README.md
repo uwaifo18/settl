@@ -6,6 +6,50 @@ A merchant opens this Progressive Web App, types a USDC amount, and gets a QR co
 
 ---
 
+## Arc Memo Integration
+
+Settl uses **Arc Transaction Memos** — a predeployed system contract on Arc that attaches structured metadata to any contract call without modifying the target contract.
+
+### How it works
+
+Instead of calling `ArcTapRouter.pay(...)` directly, the customer's wallet calls:
+
+```
+Memo.memo(
+  target  = ArcTapRouter address,
+  data    = abi.encode(pay(invoiceId, merchant, amount, deadline)),
+  memoId  = invoiceId,            // 32 bytes — indexed for lookup
+  memoData = UTF-8 JSON bytes     // { app, businessName, note, invoiceId, amountUsdc }
+)
+```
+
+Arc's `CallFrom` precompile preserves `msg.sender` through the wrapper, so `ArcTapRouter` still sees the customer's EOA as the payer. Two events are emitted per payment:
+
+1. `Paid(invoiceId, merchant, payer, amount)` — from ArcTapRouter (for settlement)
+2. `Memo(sender, target, callDataHash, memoId, memo, memoIndex)` — from the Memo contract (for reconciliation)
+
+### Memo contract
+
+| Property | Value |
+|---|---|
+| Address | `0x5294E9927c3306DcBaDb03fe70b92e01cCede505` |
+| Network | Arc Testnet |
+| Docs | https://docs.arc.io/arc/concepts/transaction-memos |
+
+### What this enables
+
+- Every payment has an **immutable onchain record** with the business name and memo note, permanently queryable by `memoId` (= `invoiceId`)
+- Merchants, wallets, and indexers can reconcile payments against invoices without any offchain database
+- ArcScan shows both events on the same transaction — full audit trail at a glance
+- The merchant's history screen shows an "⛓ onchain" badge next to the note when the Memo event was decoded
+
+### Constraints
+
+- Only **EOA wallets** are supported (MetaMask, Coinbase Wallet, Rabby, Rainbow, hardware wallets)
+- Smart contract wallets (ERC-4337, Safe multisig, Circle modular wallets) will revert — the payment falls back to the standard `router.pay()` path automatically
+
+---
+
 ## Architecture
 
 ```

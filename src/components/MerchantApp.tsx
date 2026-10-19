@@ -121,7 +121,7 @@ export default function MerchantApp() {
           }
           if (settings?.soundEnabled && settings?.hapticsEnabled) celebratePayment()
 
-          // Update history
+          // Update history — include onchain memo if the Arc Memo event was captured
           await updateHistoryEntry(newInvoice.invoiceId, {
             status: log.amount >= newInvoice.amount ? 'paid' : 'underpaid',
             paidAmount: log.amount,
@@ -129,6 +129,7 @@ export default function MerchantApp() {
             txHash: log.txHash,
             settledAt: Date.now(),
             detectedMs,
+            onchainMemo: log.onchainMemo,
           })
         })()
       },

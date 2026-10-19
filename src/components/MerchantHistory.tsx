@@ -104,6 +104,12 @@ export default function MerchantHistory({ onBack }: Props) {
                       From: {formatAddress(entry.payerAddress)}
                     </p>
                   )}
+                  {entry.onchainMemo?.note && (
+                    <p className="text-xs" style={{ color: 'var(--muted)' }}>
+                      <span className="font-medium" style={{ color: 'var(--accent)' }}>⛓ onchain:</span>{' '}
+                      {entry.onchainMemo.note}
+                    </p>
+                  )}
                 </div>
                 {entry.txHash && (
                   <a

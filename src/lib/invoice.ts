@@ -36,6 +36,8 @@ export interface HistoryEntry {
   detectedMs?: number            // ms since block timestamp when detected
   createdAt: number              // unix ms
   settledAt?: number             // unix ms
+  /** Decoded onchain memo from the Arc Memo contract event */
+  onchainMemo?: { businessName?: string; note?: string }
 }
 
 /** Generate 32 cryptographically random bytes as a 0x-prefixed hex string */

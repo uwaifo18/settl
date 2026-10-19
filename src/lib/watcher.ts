@@ -15,6 +15,7 @@ import {
 import { arcTestnet } from 'viem/chains'
 import { requireChain } from '@/onchain-facts'
 import type { Invoice } from './invoice'
+import { MEMO_CONTRACT_ADDRESS, decodeMemoData } from './memo'
 
 const ARC_TESTNET_CHAIN_ID = 5042002
 const chain = requireChain(ARC_TESTNET_CHAIN_ID)
@@ -22,6 +23,11 @@ const chain = requireChain(ARC_TESTNET_CHAIN_ID)
 // ArcTapRouter Paid event ABI item
 const PAID_EVENT = parseAbiItem(
   'event Paid(bytes32 indexed invoiceId, address indexed merchant, address indexed payer, uint256 amount)'
+)
+
+// Arc Memo contract event ABI item
+const MEMO_EVENT = parseAbiItem(
+  'event Memo(address indexed sender, address indexed target, bytes32 callDataHash, bytes32 indexed memoId, bytes memo, uint256 memoIndex)'
 )
 
 export interface PaidLog {
@@ -33,6 +39,8 @@ export interface PaidLog {
   txHash: `0x${string}`
   blockTimestamp?: number
   removed: boolean
+  /** Decoded onchain memo text (business name + note), if a Memo event was emitted */
+  onchainMemo?: { businessName?: string; note?: string }
 }
 
 export type WatcherCallback = (log: PaidLog) => void
@@ -87,7 +95,7 @@ export function verifyPaidLog(log: PaidLog, invoice: Invoice, _routerAddress: `0
 
 /**
  * Backfill getLogs from a given block to 'latest'.
- * Returns matching PaidLog entries.
+ * Returns matching PaidLog entries, enriched with onchain Memo data if available.
  */
 async function backfill(
   routerAddress: `0x${string}`,
@@ -96,7 +104,8 @@ async function backfill(
 ): Promise<PaidLog[]> {
   const client = getClient()
   try {
-    const logs = await client.getLogs({
+    // Fetch Paid events from the router
+    const paidLogs = await client.getLogs({
       address: routerAddress,
       event: PAID_EVENT,
       args: {
@@ -107,19 +116,47 @@ async function backfill(
       toBlock: 'latest',
     })
 
-    return logs
+    const validPaidLogs = paidLogs
       .filter((log): log is typeof log & { blockNumber: bigint; transactionHash: `0x${string}` } =>
         log.blockNumber !== null && log.transactionHash !== null
       )
-      .map(log => ({
-        invoiceId: log.args.invoiceId as `0x${string}`,
-        merchant: log.args.merchant as `0x${string}`,
-        payer: log.args.payer as `0x${string}`,
-        amount: log.args.amount as bigint,
-        blockNumber: log.blockNumber,
-        txHash: log.transactionHash,
-        removed: log.removed ?? false,
-      }))
+
+    if (validPaidLogs.length === 0) return []
+
+    // Fetch Memo events from the Arc Memo contract filtered by memoId = invoiceId
+    let memoByTxHash = new Map<string, { businessName?: string; note?: string }>()
+    try {
+      const memoLogs = await client.getLogs({
+        address: MEMO_CONTRACT_ADDRESS,
+        event: MEMO_EVENT,
+        args: { memoId: invoice.invoiceId },
+        fromBlock,
+        toBlock: 'latest',
+      })
+      for (const ml of memoLogs) {
+        if (!ml.transactionHash || !ml.args.memo) continue
+        const decoded = decodeMemoData(ml.args.memo)
+        if (decoded) {
+          memoByTxHash.set(ml.transactionHash.toLowerCase(), {
+            businessName: decoded.businessName,
+            note: decoded.note,
+          })
+        }
+      }
+    } catch {
+      // Memo event fetch is best-effort — don't fail the whole backfill
+    }
+
+    return validPaidLogs.map(log => ({
+      invoiceId: log.args.invoiceId as `0x${string}`,
+      merchant: log.args.merchant as `0x${string}`,
+      payer: log.args.payer as `0x${string}`,
+      amount: log.args.amount as bigint,
+      blockNumber: log.blockNumber,
+      txHash: log.transactionHash,
+      removed: log.removed ?? false,
+      onchainMemo: memoByTxHash.get(log.transactionHash.toLowerCase()),
+    }))
   } catch (err) {
     console.warn('[watcher] backfill error:', err)
     return []
