@@ -17,11 +17,12 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ConnectKitProvider } from 'connectkit'
+import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
 import { Toaster } from 'sonner'
 import { config } from './config'
 import App from './App'
 import './index.css'
+import '@rainbow-me/rainbowkit/styles.css'
 
 const queryClient = new QueryClient()
 
@@ -70,11 +71,11 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <ConnectKitProvider>
+        <RainbowKitProvider theme={darkTheme({ accentColor: '#2563eb', borderRadius: 'large' })}>
           <App />
           <StudioWatermark />
           <Toaster position="top-center" />
-        </ConnectKitProvider>
+        </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
   </StrictMode>,

@@ -11,7 +11,7 @@ import {
   useWaitForTransactionReceipt,
   useReadContract,
 } from 'wagmi'
-import { ConnectKitButton } from 'connectkit'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { erc20Abi } from 'viem'
 import { ExternalLink, AlertTriangle, CheckCircle, Loader2, ArrowRight } from 'lucide-react'
 import TestnetBanner from './TestnetBanner'
@@ -362,9 +362,9 @@ export default function PayPage() {
 
           {/* Connect wallet */}
           {needsWallet && (
-            <div className="text-center">
-              <p className="mb-3 text-sm" style={{ color: 'var(--muted)' }}>Connect your wallet to pay</p>
-              <ConnectKitButton />
+            <div className="flex flex-col items-center gap-3">
+              <p className="text-sm" style={{ color: 'var(--muted)' }}>Connect your wallet to pay</p>
+              <ConnectButton label="Connect Wallet" />
             </div>
           )}
 
@@ -434,7 +434,7 @@ export default function PayPage() {
               <span className="text-xs" style={{ color: 'var(--subtle)' }}>
                 Connected: {address ? formatAddress(address) : ''}
               </span>
-              <ConnectKitButton />
+              <ConnectButton showBalance={false} chainStatus="none" />
             </div>
           )}
         </div>
