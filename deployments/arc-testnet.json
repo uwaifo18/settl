@@ -1,0 +1,8 @@
+{
+  "chainId": 5042002,
+  "router": "0x6216af3fb64d039b87088f78da38bd641d62b426",
+  "usdc": "0x3600000000000000000000000000000000000000",
+  "deployTx": "0x1a4b8808443627f397f113970c1b034e96f6591456247834b26e836b7ee870cb",
+  "block": 0,
+  "explorerUrl": "https://explorer.testnet.arc.io/address/0x6216af3fb64d039b87088f78da38bd641d62b426"
+}

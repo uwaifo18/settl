@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+contracts/out/
+contracts/cache/
+
+# Environment files (never commit secrets)
+.env
+.env.local
+.env.*.local
+
+# Foundry keystore
+keystore/
+*.keystore
+
+# Logs
+*.log
+/tmp/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Bun
+.bun/
