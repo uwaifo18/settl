@@ -11,7 +11,7 @@ import {
   useWaitForTransactionReceipt,
   useReadContract,
 } from 'wagmi'
-import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { usePrivy } from '@privy-io/react-auth'
 import { erc20Abi } from 'viem'
 import { ExternalLink, AlertTriangle, CheckCircle, Loader2, ArrowRight } from 'lucide-react'
 import TestnetBanner from './TestnetBanner'
@@ -56,6 +56,7 @@ type TxPhase = 'idle' | 'approving' | 'pendingApprove' | 'paying' | 'pendingPay'
 
 export default function PayPage() {
   const urlHash = window.location.hash
+  const { login, logout, authenticated, ready } = usePrivy()
   const { address, chainId, isConnected } = useAccount()
   const { switchChain, isPending: isSwitching } = useSwitchChain()
 
@@ -361,10 +362,21 @@ export default function PayPage() {
           {errorMsg && <InlineError message={errorMsg} />}
 
           {/* Connect wallet */}
-          {needsWallet && (
+          {!ready ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-5 w-5 animate-spin" style={{ color: 'var(--muted)' }} />
+            </div>
+          ) : needsWallet && (
             <div className="flex flex-col items-center gap-3">
               <p className="text-sm" style={{ color: 'var(--muted)' }}>Connect your wallet to pay</p>
-              <ConnectButton label="Connect Wallet" />
+              <button
+                type="button"
+                onClick={login}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-base font-bold text-white transition-all hover:scale-[1.01] active:scale-[0.99]"
+                style={{ background: 'var(--accent)', minHeight: '56px' }}
+              >
+                Connect Wallet
+              </button>
             </div>
           )}
 
@@ -429,12 +441,19 @@ export default function PayPage() {
           )}
 
           {/* Connected wallet info */}
-          {isConnected && (
+          {authenticated && isConnected && (
             <div className="flex items-center justify-between">
               <span className="text-xs" style={{ color: 'var(--subtle)' }}>
                 Connected: {address ? formatAddress(address) : ''}
               </span>
-              <ConnectButton showBalance={false} chainStatus="none" />
+              <button
+                type="button"
+                onClick={() => void logout()}
+                className="rounded-xl px-3 py-1.5 text-xs font-medium"
+                style={{ background: 'var(--surface-muted)', color: 'var(--muted)' }}
+              >
+                Disconnect
+              </button>
             </div>
           )}
         </div>

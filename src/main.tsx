@@ -15,14 +15,16 @@ import './console-capture'
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
+import { WagmiProvider } from '@privy-io/wagmi'
+import { PrivyProvider } from '@privy-io/react-auth'
+import { arcTestnet } from 'viem/chains'
 import { Toaster } from 'sonner'
 import { config } from './config'
 import App from './App'
 import './index.css'
-import '@rainbow-me/rainbowkit/styles.css'
+
+const PRIVY_APP_ID = (import.meta.env.VITE_PRIVY_APP_ID as string | undefined) || 'clxxxxxxxxxxxxxxxxxxxxxxx'
 
 const queryClient = new QueryClient()
 
@@ -69,15 +71,27 @@ const StudioWatermark = () => (
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <WagmiProvider config={config}>
+    <PrivyProvider
+      appId={PRIVY_APP_ID}
+      config={{
+        appearance: {
+          theme: 'dark',
+          accentColor: '#2563eb',
+          logo: undefined,
+        },
+        supportedChains: [arcTestnet],
+        defaultChain: arcTestnet,
+        loginMethods: ['wallet', 'email'],
+      }}
+    >
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider theme={darkTheme({ accentColor: '#2563eb', borderRadius: 'large' })}>
+        <WagmiProvider config={config}>
           <App />
           <StudioWatermark />
           <Toaster position="top-center" />
-        </RainbowKitProvider>
+        </WagmiProvider>
       </QueryClientProvider>
-    </WagmiProvider>
+    </PrivyProvider>
   </StrictMode>,
 )
 
