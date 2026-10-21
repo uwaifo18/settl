@@ -18,12 +18,20 @@ import TestnetBanner from './TestnetBanner'
 import { decodeInvoiceHash, isInvoiceExpired, formatCountdown, secondsUntilDeadline } from '@/lib/invoice'
 import { formatUsdcDisplay, formatAddress, LARGE_AMOUNT_THRESHOLD } from '@/lib/amount'
 import { buildTxExplorerUrl } from '@/onchain-facts'
-import {
-  MEMO_CONTRACT_ADDRESS,
-  MEMO_ABI,
-  encodeMemoData,
-  encodePayCalldata,
-} from '@/lib/memo'
+const ROUTER_ABI = [
+  {
+    type: 'function',
+    name: 'pay',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'invoiceId', type: 'bytes32' },
+      { name: 'merchant', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+      { name: 'deadline', type: 'uint256' },
+    ],
+    outputs: [],
+  },
+] as const
 
 const ARC_TESTNET_CHAIN_ID = 5042002
 // Fallback to the deployed address if env var is not set at build time
@@ -168,30 +176,11 @@ export default function PayPage() {
     setTxPhase('paying')
     setErrorMsg('')
 
-    // Encode ArcTapRouter.pay() calldata for the Memo wrapper
-    const payCalldata = encodePayCalldata(
-      invoice.invoiceId,
-      invoice.merchant,
-      invoice.amount,
-      BigInt(invoice.deadline)
-    )
-
-    // Encode memo payload: business name + note stored permanently onchain
-    const memoData = encodeMemoData({
-      businessName: invoice.name,
-      note: invoice.memo,
-      invoiceId: invoice.invoiceId,
-      amountUsdc: (Number(invoice.amount) / 1_000_000).toFixed(6),
-    })
-
-    // Call Memo.memo(router, payCalldata, invoiceId, memoData)
-    // This wraps router.pay() and emits a Memo event with the invoice metadata,
-    // preserving msg.sender so the router still sees the customer as payer.
     writePay({
-      address: MEMO_CONTRACT_ADDRESS,
-      abi: MEMO_ABI,
-      functionName: 'memo',
-      args: [ROUTER_ADDRESS, payCalldata, invoice.invoiceId, memoData],
+      address: ROUTER_ADDRESS,
+      abi: ROUTER_ABI,
+      functionName: 'pay',
+      args: [invoice.invoiceId, invoice.merchant, invoice.amount, BigInt(invoice.deadline)],
       chainId: ARC_TESTNET_CHAIN_ID,
     }, {
       onSuccess: (hash) => {
