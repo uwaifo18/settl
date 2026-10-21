@@ -153,7 +153,6 @@ export default function PayPage() {
         abi: erc20Abi,
         functionName: 'approve',
         args: [ROUTER_ADDRESS, invoice.amount],
-        chainId: ARC_TESTNET_CHAIN_ID,
       }, {
         onSuccess: (hash) => {
           setApproveTxHash(hash)
@@ -181,7 +180,6 @@ export default function PayPage() {
       abi: ROUTER_ABI,
       functionName: 'pay',
       args: [invoice.invoiceId, invoice.merchant, invoice.amount, BigInt(invoice.deadline)],
-      chainId: ARC_TESTNET_CHAIN_ID,
     }, {
       onSuccess: (hash) => {
         setTxHash(hash)
