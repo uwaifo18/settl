@@ -24,7 +24,7 @@ import { config } from './config'
 import App from './App'
 import './index.css'
 
-const PRIVY_APP_ID = (import.meta.env.VITE_PRIVY_APP_ID as string | undefined) || 'clxxxxxxxxxxxxxxxxxxxxxxx'
+const PRIVY_APP_ID = (import.meta.env.VITE_PRIVY_APP_ID as string | undefined) || 'cmsme6edh01ig0cjj1do2eqx2'
 
 const queryClient = new QueryClient()
 
