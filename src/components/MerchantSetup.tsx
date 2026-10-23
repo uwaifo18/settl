@@ -102,7 +102,7 @@ export default function MerchantSetup({ onSave, existing }: Props) {
       {/* Header */}
       <div className="mb-8 flex flex-col items-center text-center">
         <div className="mb-4">
-          <SettlLogo size={40} />
+          <SettlLogo height={40} />
         </div>
         <p className="mt-1 text-sm" style={{ color: 'var(--muted)' }}>
           {existing ? 'Update your merchant details' : 'Enter your receiving address to start accepting USDC payments'}

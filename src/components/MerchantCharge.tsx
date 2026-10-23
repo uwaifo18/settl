@@ -36,7 +36,7 @@ export default function MerchantCharge({ merchantName, onCharge, isCreating }: P
       {/* Amount display */}
       <div className="flex flex-1 flex-col items-center justify-center px-4 pt-8">
         <div className="mb-4">
-          <SettlLogo size={28} />
+          <SettlLogo height={28} />
         </div>
         <p className="mb-2 text-sm font-medium" style={{ color: 'var(--muted)' }}>
           {merchantName || 'Charge Amount'}

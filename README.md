@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/logo.svg" alt="Settl — Instant USDC Payments, Built on Arc" width="800" />
+  <img src="public/IMG_4878.png" alt="Settl — Instant USDC Payments, Built on Arc" width="800" />
 </p>
 
 > **TESTNET ONLY. No real funds are used or at risk. The contract is unaudited.**
