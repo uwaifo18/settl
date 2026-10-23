@@ -8,7 +8,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://rpc.testnet.arc.io wss://rpc.testnet.arc.io https://auth.privy.io wss://relay.walletconnect.com wss://relay.walletconnect.org https://explorer-api.walletconnect.com https://modular-sdk.circle.com https://5294e9927c3306dcbadb03fe70b92e01ccede505.rpc.thirdweb.com; frame-src https://auth.privy.io https://verify.walletconnect.com https://verify.walletconnect.org; object-src 'none'; base-uri 'self'"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.privy.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.privy.io; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://rpc.testnet.arc.io wss://rpc.testnet.arc.io https://*.privy.io wss://*.privy.io https://*.walletconnect.com wss://*.walletconnect.com https://*.walletconnect.org wss://*.walletconnect.org https://explorer-api.walletconnect.com https://modular-sdk.circle.com https://api.coinbase.com https://*.infura.io https://*.alchemy.com; worker-src 'self' blob:; frame-src https://*.privy.io https://verify.walletconnect.com https://verify.walletconnect.org https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'"
         },
         {
           "key": "Referrer-Policy",
@@ -20,11 +20,11 @@
         },
         {
           "key": "X-Frame-Options",
-          "value": "DENY"
+          "value": "SAMEORIGIN"
         },
         {
           "key": "Permissions-Policy",
-          "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+          "value": "camera=(), microphone=(), geolocation=(), usb=()"
         },
         {
           "key": "Strict-Transport-Security",
