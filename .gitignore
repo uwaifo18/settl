@@ -19,6 +19,10 @@ keystore/
 *.log
 /tmp/
 
+# Arc Studio session capture files (never commit — may contain session data)
+console.jsonl
+traces.jsonl
+
 # IDE
 .vscode/
 .idea/
