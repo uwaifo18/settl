@@ -16,7 +16,7 @@ import { buildPayUrl } from '@/lib/invoice'
 import { startWatcher, checkIsPaid, type Watcher, type PaidLog } from '@/lib/watcher'
 import { loadMerchantSettings, saveMerchantSettings, clearMerchantSettings, type MerchantSettings } from '@/lib/merchant-store'
 import { saveHistoryEntry, updateHistoryEntry } from '@/lib/history'
-import { celebratePayment, playPaymentChime } from '@/lib/audio'
+import { celebratePayment, unlockAudio } from '@/lib/audio'
 
 // Fallback to the deployed address if env var is not set at build time
 const ROUTER_ADDRESS = (
@@ -117,12 +117,10 @@ export default function MerchantApp() {
           setPaidState({ log, detectedMs })
           setScreen('paid')
 
-          // Celebrate
-          if (settings?.soundEnabled) playPaymentChime()
-          if (settings?.hapticsEnabled) {
-            try { navigator.vibrate?.([100, 50, 100]) } catch { /* ignore */ }
+          // Celebrate — celebratePayment handles both chime + haptics
+          if (settings?.soundEnabled || settings?.hapticsEnabled) {
+            celebratePayment()
           }
-          if (settings?.soundEnabled && settings?.hapticsEnabled) celebratePayment()
 
           // Update history — include onchain memo if the Arc Memo event was captured
           await updateHistoryEntry(newInvoice.invoiceId, {
@@ -186,7 +184,7 @@ export default function MerchantApp() {
 
   if (screen === 'setup') {
     return (
-      <div>
+      <div onClick={unlockAudio}>
         <TestnetBanner />
         <MerchantSetup existing={settings} onSave={handleSaveSettings} />
       </div>
@@ -195,7 +193,7 @@ export default function MerchantApp() {
 
   if (screen === 'history') {
     return (
-      <div>
+      <div onClick={unlockAudio}>
         <TestnetBanner />
         <MerchantHistory onBack={() => setScreen('charge')} />
       </div>
@@ -203,7 +201,7 @@ export default function MerchantApp() {
   }
 
   return (
-    <div className="relative">
+    <div className="relative" onClick={unlockAudio}>
       <TestnetBanner />
       {/* Toolbar icons */}
       <div className="absolute right-4 top-10 z-10 flex gap-2">

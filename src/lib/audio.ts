@@ -12,6 +12,22 @@ function getAudioContext(): AudioContext {
   return audioCtx
 }
 
+/**
+ * Call this on any user gesture (tap, click) to unlock the AudioContext.
+ * Browsers suspend AudioContext until a gesture has occurred.
+ * Call once when the app loads and the user first taps anything.
+ */
+export function unlockAudio(): void {
+  try {
+    const ctx = getAudioContext()
+    if (ctx.state === 'suspended') {
+      void ctx.resume()
+    }
+  } catch {
+    // ignore
+  }
+}
+
 /** Play a short pleasant chime (C5 + E5 chord, 400ms) */
 export function playPaymentChime(): void {
   try {
