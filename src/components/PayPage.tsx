@@ -86,7 +86,7 @@ function PayButton({
 
   let label: React.ReactNode
   if (isWaiting) {
-    label = <><PulsingDots /><span className="ml-2">Check your wallet</span></>
+    label = <><PulsingDots /><span className="ml-2">Confirm in wallet…</span></>
   } else if (isConfirming) {
     label = <><PulsingDots /><span className="ml-2">{phase === 'pendingApprove' || isApproveConfirming ? 'Approving…' : 'Confirming…'}</span></>
   } else if (!hasEnoughAllowance) {
