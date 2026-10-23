@@ -5,7 +5,8 @@
 
 import { useState } from 'react'
 import { isAddress } from 'viem'
-import { Store, ChevronRight, Volume2, Zap, RotateCcw, Fingerprint, LogIn, Loader2 } from 'lucide-react'
+import { ChevronRight, Volume2, Zap, RotateCcw, Fingerprint, LogIn, Loader2 } from 'lucide-react'
+import SettlLogo from './SettlLogo'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { MerchantSettings } from '@/lib/merchant-store'
 import {
@@ -99,13 +100,10 @@ export default function MerchantSetup({ onSave, existing }: Props) {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center px-4 py-8" style={{ background: 'var(--bg-gradient)' }}>
       {/* Header */}
-      <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: 'var(--accent)' }}>
-          <Store className="h-7 w-7 text-white" />
+      <div className="mb-8 flex flex-col items-center text-center">
+        <div className="mb-4">
+          <SettlLogo size={40} />
         </div>
-        <h1 className="display text-2xl font-bold" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
-          {existing ? 'Settings' : 'Set up Settl'}
-        </h1>
         <p className="mt-1 text-sm" style={{ color: 'var(--muted)' }}>
           {existing ? 'Update your merchant details' : 'Enter your receiving address to start accepting USDC payments'}
         </p>

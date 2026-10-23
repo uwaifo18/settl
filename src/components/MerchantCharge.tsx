@@ -5,6 +5,7 @@
 import { useState } from 'react'
 import { Loader2, MessageSquare } from 'lucide-react'
 import Keypad from './Keypad'
+import SettlLogo from './SettlLogo'
 import { formatUsdc, parseUsdcInput, isLargeAmount, validateUsdcInput } from '@/lib/amount'
 
 interface Props {
@@ -34,6 +35,9 @@ export default function MerchantCharge({ merchantName, onCharge, isCreating }: P
     <div className="flex min-h-dvh flex-col" style={{ background: 'var(--bg-gradient)' }}>
       {/* Amount display */}
       <div className="flex flex-1 flex-col items-center justify-center px-4 pt-8">
+        <div className="mb-4">
+          <SettlLogo size={28} />
+        </div>
         <p className="mb-2 text-sm font-medium" style={{ color: 'var(--muted)' }}>
           {merchantName || 'Charge Amount'}
         </p>
