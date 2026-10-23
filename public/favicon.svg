@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Cream background square -->
+  <rect width="512" height="512" fill="#F4F1EA"/>
+  <!-- Open circle mark — centered, bold stroke -->
+  <path
+    d="M 256 96
+       A 160 160 0 1 1 349.3 149.8"
+    fill="none"
+    stroke="#0B0B0C"
+    stroke-width="36"
+    stroke-linecap="round"
+  />
+  <!-- Green dot at gap midpoint (top-right of circle, ~45° from top) -->
+  <circle cx="349" cy="150" r="26" fill="#14A06B"/>
+</svg>
