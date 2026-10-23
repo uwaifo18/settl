@@ -37,6 +37,7 @@ export interface PaidLog {
   amount: bigint
   blockNumber: bigint
   txHash: `0x${string}`
+  contractAddress?: `0x${string}`
   blockTimestamp?: number
   removed: boolean
   /** Decoded onchain memo text (business name + note), if a Memo event was emitted */
@@ -84,12 +85,13 @@ function getClient() {
  * Verify a received log against the invoice spec.
  * Returns true only if the log legitimately pays THIS invoice.
  */
-export function verifyPaidLog(log: PaidLog, invoice: Invoice, _routerAddress: `0x${string}`): boolean {
+export function verifyPaidLog(log: PaidLog, invoice: Invoice, routerAddress: `0x${string}`): boolean {
   if (log.removed) return false
+  // Verify the log came from the exact router we trust
+  if (log.contractAddress && log.contractAddress.toLowerCase() !== routerAddress.toLowerCase()) return false
   if (log.invoiceId.toLowerCase() !== invoice.invoiceId.toLowerCase()) return false
   if (log.merchant.toLowerCase() !== invoice.merchant.toLowerCase()) return false
   if (log.amount < invoice.amount) return false
-  // routerAddress is already validated at URL parse time, but double-check
   return true
 }
 
@@ -154,6 +156,7 @@ async function backfill(
       amount: log.args.amount as bigint,
       blockNumber: log.blockNumber,
       txHash: log.transactionHash,
+      contractAddress: log.address,
       removed: log.removed ?? false,
       onchainMemo: memoByTxHash.get(log.transactionHash.toLowerCase()),
     }))
@@ -188,11 +191,20 @@ export function startWatcher(options: WatcherOptions): Watcher {
     onPaid(log)
   }
 
+  // Keep watching until deadline + 60s grace period
+  const gracePeriodMs = (invoice.deadline + 60) * 1000
+
   async function runBackfill() {
     if (stopped) return
     const fromBlock = invoice.createdBlock ?? (await client.getBlockNumber() - 50n)
     const logs = await backfill(routerAddress, invoice, fromBlock)
     logs.forEach(handleLog)
+    // Auto-stop after deadline+60s grace period if not already paid
+    if (Date.now() > gracePeriodMs) {
+      stopped = true
+      unwatch?.()
+      stopPollFallback()
+    }
   }
 
   function startSubscription() {
@@ -217,6 +229,7 @@ export function startWatcher(options: WatcherOptions): Watcher {
               amount: log.args.amount as bigint,
               blockNumber: log.blockNumber,
               txHash: log.transactionHash,
+              contractAddress: log.address,
               removed: log.removed ?? false,
             })
           }
