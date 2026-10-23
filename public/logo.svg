@@ -7,8 +7,8 @@
   <circle cx="290" cy="270" r="72" stroke="#111111" stroke-width="14" stroke-linecap="round"
     stroke-dasharray="405 55" stroke-dashoffset="-10"/>
 
-  <!-- Green dot at top-right of gap -->
-  <circle cx="349" cy="211" r="15" fill="#22c55e"/>
+  <!-- Green dot at midpoint of gap -->
+  <circle cx="341" cy="219" r="15" fill="#22c55e"/>
 
   <!-- Wordmark "settl" -->
   <text x="390" y="308"

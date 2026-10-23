@@ -37,8 +37,8 @@ export default function SettlLogo({ size = 36, dark = false }: Props) {
         strokeDasharray="168 24"
         strokeDashoffset="-6"
       />
-      {/* Green dot at top-right of the gap */}
-      <circle cx="63" cy="14" r="7" fill="#22c55e" />
+      {/* Green dot at the midpoint of the gap */}
+      <circle cx="61" cy="19" r="7" fill="#22c55e" />
 
       {/* Wordmark */}
       <text
