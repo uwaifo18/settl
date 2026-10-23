@@ -3,6 +3,7 @@
  * Shown after onchain event is verified against the invoice.
  */
 
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircle, ExternalLink, RotateCcw } from 'lucide-react'
 import { formatUsdcDisplay, formatAddress } from '@/lib/amount'
@@ -11,6 +12,7 @@ import type { PaidLog } from '@/lib/watcher'
 import type { Invoice } from '@/lib/invoice'
 
 const ARC_TESTNET_CHAIN_ID = 5042002
+const AUTO_DISMISS_SECONDS = 30
 
 interface Props {
   invoice: Invoice
@@ -20,6 +22,21 @@ interface Props {
 }
 
 export default function MerchantPaid({ invoice, paidLog, detectedMs, onNewCharge }: Props) {
+  const [remaining, setRemaining] = useState(AUTO_DISMISS_SECONDS)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRemaining(s => {
+        if (s <= 1) {
+          clearInterval(interval)
+          onNewCharge()
+          return 0
+        }
+        return s - 1
+      })
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [onNewCharge])
   const txUrl = buildTxExplorerUrl(ARC_TESTNET_CHAIN_ID, paidLog.txHash)
   const wasOverpaid = paidLog.amount > invoice.amount
 
@@ -101,7 +118,7 @@ export default function MerchantPaid({ invoice, paidLog, detectedMs, onNewCharge
         <ExternalLink className="h-4 w-4" />
       </a>
 
-      {/* New charge button */}
+      {/* New charge button + countdown */}
       <button
         type="button"
         onClick={onNewCharge}
@@ -111,6 +128,32 @@ export default function MerchantPaid({ invoice, paidLog, detectedMs, onNewCharge
         <RotateCcw className="h-5 w-5" />
         New charge
       </button>
+
+      {/* Auto-dismiss countdown */}
+      <motion.div
+        className="mt-5 flex items-center gap-2"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+      >
+        {/* SVG ring */}
+        <svg width="20" height="20" viewBox="0 0 20 20" className="-rotate-90">
+          <circle cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" />
+          <circle
+            cx="10" cy="10" r="8"
+            fill="none"
+            stroke="rgba(255,255,255,0.8)"
+            strokeWidth="2"
+            strokeDasharray={`${2 * Math.PI * 8}`}
+            strokeDashoffset={`${2 * Math.PI * 8 * (1 - remaining / AUTO_DISMISS_SECONDS)}`}
+            strokeLinecap="round"
+            style={{ transition: 'stroke-dashoffset 1s linear' }}
+          />
+        </svg>
+        <p className="text-xs text-white/60">
+          New charge in {remaining}s
+        </p>
+      </motion.div>
     </motion.div>
   )
 }
