@@ -1,53 +1,53 @@
 /**
- * Settl logo — open circle with green dot + bold wordmark.
- * Matches the brand identity: nearly-complete black circle, green filled dot at top-right,
- * bold lowercase "settl" wordmark in black.
+ * Settl logo — matches brand identity exactly.
+ * Nearly-complete bold black circle, green filled dot at top-right gap,
+ * bold lowercase "settl" wordmark.
  */
 
 interface Props {
   /** Height of the logo in px. Width scales proportionally. Default 36. */
   size?: number
-  /** Whether to show on a dark background (inverts circle + text to white). Default false. */
+  /** Whether to show on a dark background (inverts circle + text to white). */
   dark?: boolean
 }
 
 export default function SettlLogo({ size = 36, dark = false }: Props) {
-  // The icon is ~52×52 units, wordmark extends ~200 units to the right
-  // Total viewBox width: ~280, height: 52
   const inkColor = dark ? '#ffffff' : '#111111'
+  // ViewBox: icon occupies 0-80, wordmark extends to 380, height 80
+  const scale = size / 80
 
   return (
     <svg
-      width={(size / 52) * 280}
+      width={380 * scale}
       height={size}
-      viewBox="0 0 280 52"
+      viewBox="0 0 380 80"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-label="Settl"
       role="img"
     >
-      {/* Open circle — nearly complete arc, gap at top-right */}
+      {/* Nearly-complete circle — gap at top-right, thick stroke, round cap */}
       <circle
-        cx="26"
-        cy="26"
-        r="20"
+        cx="40"
+        cy="40"
+        r="30"
         stroke={inkColor}
-        strokeWidth="4.5"
+        strokeWidth="7"
         strokeLinecap="round"
-        strokeDasharray="109 17"
-        strokeDashoffset="-4"
+        strokeDasharray="168 24"
+        strokeDashoffset="-6"
       />
-      {/* Green dot at top-right of the circle gap */}
-      <circle cx="42" cy="9" r="5" fill="#22c55e" />
+      {/* Green dot at top-right of the gap */}
+      <circle cx="63" cy="14" r="7" fill="#22c55e" />
 
-      {/* Wordmark: "settl" — bold, lowercase, tight tracking */}
+      {/* Wordmark */}
       <text
-        x="64"
-        y="38"
-        fontFamily="'Space Grotesk', 'DM Sans', system-ui, sans-serif"
-        fontWeight="700"
-        fontSize="36"
-        letterSpacing="-1"
+        x="90"
+        y="58"
+        fontFamily="'DM Sans','Inter','Space Grotesk',system-ui,sans-serif"
+        fontWeight="800"
+        fontSize="56"
+        letterSpacing="-2"
         fill={inkColor}
       >
         settl
