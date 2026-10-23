@@ -13,7 +13,8 @@ import {
 } from 'wagmi'
 import { usePrivy } from '@privy-io/react-auth'
 import { erc20Abi } from 'viem'
-import { ExternalLink, AlertTriangle, CheckCircle, Loader2, ArrowRight } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ExternalLink, AlertTriangle, CheckCircle, ArrowRight } from 'lucide-react'
 import TestnetBanner from './TestnetBanner'
 import { decodeInvoiceHash, isInvoiceExpired, formatCountdown, secondsUntilDeadline } from '@/lib/invoice'
 import { formatUsdcDisplay, formatAddress, LARGE_AMOUNT_THRESHOLD } from '@/lib/amount'
@@ -61,6 +62,91 @@ function mapRevertError(err: unknown): string {
 }
 
 type TxPhase = 'idle' | 'approving' | 'pendingApprove' | 'paying' | 'pendingPay' | 'success'
+
+function PulsingDots() {
+  return (
+    <span className="flex items-center gap-1">
+      {[0, 1, 2].map(i => (
+        <motion.span
+          key={i}
+          className="inline-block h-1.5 w-1.5 rounded-full bg-white"
+          animate={{ opacity: [0.3, 1, 0.3] }}
+          transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2, ease: 'easeInOut' }}
+        />
+      ))}
+    </span>
+  )
+}
+
+function PayButton({
+  onClick, disabled, phase, isApprovePending, isApproveConfirming,
+  isPayPending, isPayConfirming, hasEnoughAllowance, amount,
+}: {
+  onClick: () => void
+  disabled: boolean
+  phase: TxPhase
+  isApprovePending: boolean
+  isApproveConfirming: boolean
+  isPayPending: boolean
+  isPayConfirming: boolean
+  hasEnoughAllowance: boolean
+  amount: bigint
+}) {
+  const isWaiting = phase === 'approving' || isApprovePending || phase === 'paying' || isPayPending
+  const isConfirming = phase === 'pendingApprove' || isApproveConfirming || phase === 'pendingPay' || isPayConfirming
+
+  let label: React.ReactNode
+  if (isWaiting) {
+    label = <><PulsingDots /><span className="ml-2">Check your wallet</span></>
+  } else if (isConfirming) {
+    label = <><PulsingDots /><span className="ml-2">{phase === 'pendingApprove' || isApproveConfirming ? 'Approving…' : 'Confirming…'}</span></>
+  } else if (!hasEnoughAllowance) {
+    label = `Approve ${formatUsdcDisplay(amount)}`
+  } else {
+    label = `Pay ${formatUsdcDisplay(amount)}`
+  }
+
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      whileTap={disabled ? {} : { scale: 0.97 }}
+      whileHover={disabled ? {} : { scale: 1.01 }}
+      className="relative w-full overflow-hidden rounded-2xl text-base font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+      style={{ background: 'var(--accent)', minHeight: '56px' }}
+    >
+      {/* Shimmer sweep when waiting for wallet */}
+      <AnimatePresence>
+        {isWaiting && (
+          <motion.span
+            key="shimmer"
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%)',
+              backgroundSize: '200% 100%',
+            }}
+            animate={{ backgroundPosition: ['200% 0', '-200% 0'] }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: 'linear' }}
+            exit={{ opacity: 0 }}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={String(isWaiting) + String(isConfirming) + String(hasEnoughAllowance)}
+          className="flex items-center justify-center gap-2 px-4 py-4"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.15 }}
+        >
+          {label}
+        </motion.span>
+      </AnimatePresence>
+    </motion.button>
+  )
+}
 
 export default function PayPage() {
   const urlHash = window.location.hash
@@ -351,7 +437,12 @@ export default function PayPage() {
           {/* Connect wallet */}
           {!ready ? (
             <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-5 w-5 animate-spin" style={{ color: 'var(--muted)' }} />
+              <motion.span
+                className="inline-block h-5 w-5 rounded-full border-2 border-t-transparent"
+                style={{ borderColor: 'var(--muted)', borderTopColor: 'transparent' }}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+              />
             </div>
           ) : needsWallet && (
             <div className="flex flex-col items-center gap-3">
@@ -376,7 +467,16 @@ export default function PayPage() {
               className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold text-white disabled:opacity-60"
               style={{ background: 'var(--accent)' }}
             >
-              {isSwitching ? <><Loader2 className="h-4 w-4 animate-spin" /> Switching...</> : 'Switch to Arc Testnet'}
+              {isSwitching ? (
+                <span className="flex items-center gap-2">
+                  <motion.span
+                    className="inline-block h-4 w-4 rounded-full border-2 border-white border-t-transparent"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                  />
+                  Switching...
+                </span>
+              ) : 'Switch to Arc Testnet'}
             </button>
           )}
 
@@ -394,8 +494,7 @@ export default function PayPage() {
                 </div>
               )}
 
-              <button
-                type="button"
+              <PayButton
                 onClick={hasEnoughAllowance ? executePay : handlePay}
                 disabled={
                   hasEnoughBalance === false ||
@@ -407,23 +506,14 @@ export default function PayPage() {
                   isPayPending ||
                   isPayConfirming
                 }
-                className="flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-base font-bold text-white transition-all hover:scale-[1.01] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
-                style={{ background: 'var(--accent)', minHeight: '56px' }}
-              >
-                {txPhase === 'approving' || isApprovePending ? (
-                  <><Loader2 className="h-5 w-5 animate-spin" /> Confirm in wallet...</>
-                ) : txPhase === 'pendingApprove' || isApproveConfirming ? (
-                  <><Loader2 className="h-5 w-5 animate-spin" /> Approving USDC...</>
-                ) : txPhase === 'paying' || isPayPending ? (
-                  <><Loader2 className="h-5 w-5 animate-spin" /> Confirm in wallet...</>
-                ) : txPhase === 'pendingPay' || isPayConfirming ? (
-                  <><Loader2 className="h-5 w-5 animate-spin" /> Confirming on Arc...</>
-                ) : !hasEnoughAllowance ? (
-                  `Approve ${formatUsdcDisplay(invoice.amount)}`
-                ) : (
-                  `Pay ${formatUsdcDisplay(invoice.amount)}`
-                )}
-              </button>
+                phase={txPhase}
+                isApprovePending={isApprovePending}
+                isApproveConfirming={isApproveConfirming}
+                isPayPending={isPayPending}
+                isPayConfirming={isPayConfirming}
+                hasEnoughAllowance={hasEnoughAllowance}
+                amount={invoice.amount}
+              />
             </div>
           )}
 
