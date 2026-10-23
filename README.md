@@ -2,199 +2,285 @@
   <img src="public/logo.svg" alt="Settl — Instant USDC Payments, Built on Arc" width="800" />
 </p>
 
-# Settl — USDC Point-of-Sale on Arc Testnet
+> **TESTNET ONLY. No real funds are used or at risk. The contract is unaudited.**
 
-A merchant opens this Progressive Web App, types a USDC amount, and gets a QR code (plus NFC write on supported Android). The customer scans or taps, connects a wallet, and confirms. Arc's sub-second finality and USDC-as-gas mean the merchant screen flips to a big green **PAID** within about a second of the transaction landing. No backend, no custody, no merchant keys on the device.
+Settl is a non-custodial USDC point-of-sale PWA for Arc Testnet. A merchant types an amount and gets a QR code. The customer scans, connects any EVM wallet, and pays in one or two taps. Arc's sub-second finality means the merchant screen flips green within 1–3 seconds of the transaction landing.
 
-> **TESTNET ONLY. No real funds.**
+Built with [Arc Studio](https://studio.arc.io)
 
 ---
 
-## Arc Memo Integration
+## Quick Start
 
-Settl uses **Arc Transaction Memos** — a predeployed system contract on Arc that attaches structured metadata to any contract call without modifying the target contract.
-
-### How it works
-
-Instead of calling `ArcTapRouter.pay(...)` directly, the customer's wallet calls:
-
-```
-Memo.memo(
-  target  = ArcTapRouter address,
-  data    = abi.encode(pay(invoiceId, merchant, amount, deadline)),
-  memoId  = invoiceId,            // 32 bytes — indexed for lookup
-  memoData = UTF-8 JSON bytes     // { app, businessName, note, invoiceId, amountUsdc }
-)
+```bash
+git clone https://github.com/uwaifo18/settl
+cd settl
+bun install
+cp .env.example .env          # fill in VITE_PRIVY_APP_ID and VITE_ROUTER_ADDRESS
+bun run dev                   # http://localhost:5173
 ```
 
-Arc's `CallFrom` precompile preserves `msg.sender` through the wrapper, so `ArcTapRouter` still sees the customer's EOA as the payer. Two events are emitted per payment:
+**Run contract tests:**
+```bash
+forge test --gas-report
+```
 
-1. `Paid(invoiceId, merchant, payer, amount)` — from ArcTapRouter (for settlement)
-2. `Memo(sender, target, callDataHash, memoId, memo, memoIndex)` — from the Memo contract (for reconciliation)
-
-### Memo contract
-
-| Property | Value |
-|---|---|
-| Address | `0x5294E9927c3306DcBaDb03fe70b92e01cCede505` |
-| Network | Arc Testnet |
-| Docs | https://docs.arc.io/arc/concepts/transaction-memos |
-
-### What this enables
-
-- Every payment has an **immutable onchain record** with the business name and memo note, permanently queryable by `memoId` (= `invoiceId`)
-- Merchants, wallets, and indexers can reconcile payments against invoices without any offchain database
-- ArcScan shows both events on the same transaction — full audit trail at a glance
-- The merchant's history screen shows an "⛓ onchain" badge next to the note when the Memo event was decoded
-
-### Constraints
-
-- Only **EOA wallets** are supported (MetaMask, Coinbase Wallet, Rabby, Rainbow, hardware wallets)
-- Smart contract wallets (ERC-4337, Safe multisig, Circle modular wallets) will revert — the payment falls back to the standard `router.pay()` path automatically
+**Production build:**
+```bash
+bun run build
+```
 
 ---
 
 ## Architecture
 
 ```
-Browser (merchant)          Browser (customer)
-   MerchantApp                   PayPage
-       |                             |
-   localStorage              URL hash fragment
-  (settings)                  (invoice params)
-       |                             |
-   watcher.ts               wagmi + ConnectKit
-  (viem WS/HTTP)                  |
-       |                   SettlRouter.pay()
-       +------>  SettlRouter  <------+
-                (Arc Testnet)
-                     |
-              USDC.safeTransferFrom
-                (merchant gets funds)
+Browser (merchant)              Browser (customer)
+   MerchantApp                      PayPage
+        |                               |
+  localStorage                  URL hash fragment
+  (settings,                    (invoice params —
+   IndexedDB history)            never hits a server)
+        |                               |
+   watcher.ts                   Privy (wallet connect)
+  (viem WS/HTTP)                       |
+        |                     Memo.memo(router, pay(...))
+        +------>  SettlRouter  <--------+
+                 (Arc Testnet)
+                      |
+               USDC.safeTransferFrom
+               (funds go directly to merchant)
 ```
 
-**Flow:**
-1. Merchant enters amount → `createInvoice()` → QR code with pay URL (hash fragment)
-2. Customer scans QR → `/pay` page decodes invoice from hash → validate → approve + pay
-3. Merchant watcher subscribes to `Paid(invoiceId, merchant, payer, amount)` event via WS + polling fallback
-4. On matching event, verify `isPaid()` onchain → show PAID + chime + haptics
+**Payment flow:**
+1. Merchant enters amount → `createInvoice()` → QR / NFC tag with pay URL (hash fragment only)
+2. Customer scans QR → `/pay` decodes + validates invoice → approve USDC → pay via Memo wrapper
+3. Merchant watcher subscribes to `Paid(invoiceId, merchant, payer, amount)` via WebSocket + 2s HTTP poll fallback
+4. On matching event: verify `isPaid()` onchain → PAID screen + chime + haptic
+
+No backend. No custody. No merchant keys.
 
 ---
 
-## Phase 0 Recon Findings
+## Getting Testnet USDC and Adding Arc Testnet
 
-| Question | Finding |
-|---|---|
-| `arcTestnet` in viem/chains? | **Yes** — built-in, no custom definition needed |
-| USDC 0x3600...0000 standard ERC-20? | **Yes** — approve/allowance/transferFrom/transfer all work with 6 decimals |
-| EIP-2612 permit support? | Not verified — skipped; using sequential approve+pay |
-| EIP-3009 transferWithAuthorization? | Not verified — skipped; using sequential approve+pay |
-| WS `eth_subscribe` logs? | **Yes** — wss://rpc.testnet.arc.io supports it |
-| Block time? | ~sub-second on Arc Testnet (deterministic finality) |
-| Confirmations for finality? | Arc has single-block finality — 1 confirmation is final |
-| Typical gas cost? | ~80k gas for `approve`+`pay` (shown in forge gas report); gas is paid in USDC |
-| Wallet EIP-5792 batching? | Not relied upon — using sequential approve+pay as primary path |
+**In Arc Studio:** click **Get test USDC** in the sidebar.  
+**In your wallet (MetaMask / Rabby):** add Arc Testnet manually:
 
----
-
-## Setup
-
-```bash
-# 1. Install deps
-bun install
-
-# 2. Copy env example
-cp .env.example .env
-# Fill in VITE_ROUTER_ADDRESS (see deployments/arc-testnet.json)
-# Optionally add VITE_WALLETCONNECT_PROJECT_ID
-
-# 3. Run dev server
-bun run dev
-```
-
-### Get testnet USDC
-
-Use the **Get test USDC** button in Arc Studio's sidebar, or visit https://faucet.circle.com.
+| Field | Value |
+|-------|-------|
+| Network Name | Arc Testnet |
+| RPC URL | `https://rpc.testnet.arc.io` |
+| Chain ID | `5042002` |
+| Currency Symbol | `USDC` |
+| Block Explorer | `https://explorer.testnet.arc.io` |
 
 ---
 
 ## Contract
 
-**SettlRouter (ArcTapRouter)** is deployed on Arc Testnet:
-- Address: `0x6216af3fb64d039b87088f78da38bd641d62b426`
-- Tx: `0x1a4b8808443627f397f113970c1b034e96f6591456247834b26e836b7ee870cb`
-- Explorer: https://explorer.testnet.arc.io/address/0x6216af3fb64d039b87088f78da38bd641d62b426
+**SettlRouter** — non-custodial USDC payment router. No owner, no admin, no fees, no pause, no upgradeability.
 
-### Deploy your own
+| Property | Value |
+|----------|-------|
+| Contract name | `SettlRouter` (deployed as `ArcTapRouter` — bytecode identical) |
+| Network | Arc Testnet (chain ID 5042002) |
+| Address | `0x6216af3fb64d039b87088f78da38bd641d62b426` |
+| Deploy tx | `0x1a4b8808443627f397f113970c1b034e96f6591456247834b26e836b7ee870cb` |
+| Explorer | https://explorer.testnet.arc.io/address/0x6216af3fb64d039b87088f78da38bd641d62b426 |
+| Verification | Not verified on explorer. Compiler settings in `foundry.toml` (`solc 0.8.24`, `optimizer: true, runs: 200`). Source: `contracts/SettlRouter.sol`. |
+| USDC | `0x3600000000000000000000000000000000000000` (6 decimals) |
+
+**Gas cost table (USDC, approximate):**
+
+| Operation | Approx. gas | Approx. cost |
+|-----------|-------------|--------------|
+| `approve` | ~46,000 | < $0.001 |
+| `router.pay()` | ~65,000 | < $0.001 |
+| `approve + pay` total | ~111,000 | < $0.001 |
+
+Arc gas is denominated in USDC (USDC is the native gas token). Fees are sub-cent by design.
+
+### Deploy your own copy
 
 ```bash
-# Build
 forge build
 
-# Deploy (Foundry encrypted keystore recommended)
+# Import a deployer key into Foundry keystore (never use --private-key flag)
 cast wallet import deployer --interactive
-forge script contracts/script/Deploy.s.sol \
+
+# Deploy SettlRouter
+forge create contracts/SettlRouter.sol:SettlRouter \
   --rpc-url https://rpc.testnet.arc.io \
   --account deployer \
+  --constructor-args 0x3600000000000000000000000000000000000000 \
   --broadcast
 
 # Update deployments/arc-testnet.json and VITE_ROUTER_ADDRESS
 ```
 
-### Run tests
+---
+
+## Phase 0 Recon Findings (condensed)
+
+Full findings: [`recon/FINDINGS.md`](recon/FINDINGS.md)
+
+| Question | Finding |
+|----------|---------|
+| `arcTestnet` in viem/chains? | Yes — built-in |
+| USDC standard ERC-20 (6 decimals)? | Yes |
+| EIP-2612 permit? | Not verified — sequential approve+pay used |
+| EIP-3009 transferWithAuthorization? | Not verified — future work |
+| WebSocket `eth_subscribe` logs? | Yes — `wss://rpc.testnet.arc.io` |
+| Block time / finality | Sub-second, single-block finality |
+| EIP-5792 batching | Not implemented — future work |
+
+---
+
+## Security Checklist
+
+| Item | How it is met |
+|------|--------------|
+| Router address allow-listed | `VITE_ROUTER_ADDRESS` baked in at build time; URL `r=` param validated against it; mismatches rejected before any UI renders |
+| All URL params validated | version, chain ID, address format, amount > 0, 32-byte invoice ID, deadline in future, name ≤ 32, memo ≤ 64 chars |
+| No infinite approvals | Exact-amount approve only; skipped when allowance already sufficient |
+| Chain ID checked before write | `useAccount().chainId` checked; `switchChain` called if wrong |
+| PAID only after onchain verification | `verifyPaidLog()` checks contract address, invoiceId, merchant, amount ≥ requested, removed==false; followed by `isPaid()` read |
+| No dangerouslySetInnerHTML | Zero occurrences in src/ |
+| No keys client-side | Merchant app stores only a receiving address; no signing keys |
+| Invoice IDs cryptographically random | `crypto.getRandomValues(32 bytes)` |
+| No analytics | No analytics SDK |
+| Security headers | CSP, Referrer-Policy, X-Content-Type-Options, X-Frame-Options, Permissions-Policy, HSTS in `vercel.json` |
+
+---
+
+## NFC
+
+NFC write lets the merchant write the pay URL to an NFC tag so customers can tap to open the payment page.
+
+**This is NOT contactless tap-to-pay.** It does not initiate a blockchain transaction from the tap. It only opens the payment URL in the customer's browser.
+
+- Android Chrome only (`NDEFReader` API)
+- Not available on iOS (WebNFC not supported in Safari)
+- Requires a blank NFC tag (NTAG213 or similar)
+- NFC UI is hidden automatically when `NDEFReader` is not available
+
+---
+
+## Testing
+
+### Contract tests (Foundry)
+
+```bash
+forge test -vv
+# 12 tests: happy path, event args, balance delta, expired deadline,
+# double pay, zero amount, zero merchant, insufficient allowance,
+# insufficient balance, merchant independence, router-zero-balance, fuzz
+```
 
 ```bash
 forge test --gas-report
 ```
 
-All 12 tests pass — happy path, event args, balance delta, expired deadline, double pay, zero amount, zero merchant, insufficient allowance, insufficient balance, merchant independence, router-always-zero, fuzz on amounts.
+### Frontend checks
+
+```bash
+bun run check      # typecheck + lint (0 errors, 0 warnings)
+bun run build      # production build
+```
+
+---
+
+## Simulator
+
+`scripts/simulate-customer.ts` simulates a customer paying a Settl invoice from the CLI.
+
+```bash
+# Pay a link at the exact invoice amount
+CUSTOMER_PRIVATE_KEY=0x... bun run scripts/simulate-customer.ts \
+  "https://settl-sable.vercel.app/pay#v=1&r=0x6216...&..."
+
+# Simulate underpay (amount-override < invoice amount — will be rejected by watcher)
+CUSTOMER_PRIVATE_KEY=0x... bun run scripts/simulate-customer.ts \
+  "<link>" --amount-override 100000
+
+# Simulate overpay
+CUSTOMER_PRIVATE_KEY=0x... bun run scripts/simulate-customer.ts \
+  "<link>" --amount-override 9999999
+```
+
+The simulator:
+- Refuses any chain other than Arc Testnet (chain ID 5042002)
+- Reads the private key from env only, never from args
+- Reuses the app's own link parser (`decodeInvoiceHash`) logic
+- Prints the tx hash and elapsed time to confirmation
+
+---
+
+## Deployment
+
+The app is deployed to Vercel from the `main` branch of `uwaifo18/settl`.
+
+Push to `main` → Vercel auto-deploys. The contract address is baked in at build time via `VITE_ROUTER_ADDRESS`.
 
 ---
 
 ## Environment Variables
 
 | Variable | Required | Description |
-|---|---|---|
-| `VITE_ROUTER_ADDRESS` | Yes | Deployed ArcTapRouter address |
-| `VITE_WALLETCONNECT_PROJECT_ID` | No | For WalletConnect support (free at cloud.walletconnect.com) |
-| `VITE_ARC_RPC_URL` | No | Override Arc Testnet HTTP RPC |
-| `VITE_ARC_WS_URL` | No | Override Arc Testnet WS URL |
-| `ARC_TESTNET_RPC_URL` | Deploy only | For forge scripts |
+|----------|----------|-------------|
+| `VITE_ROUTER_ADDRESS` | Yes | Deployed SettlRouter address |
+| `VITE_PRIVY_APP_ID` | Yes | Privy app ID (wallet connection on pay page) |
+| `VITE_CLIENT_KEY` | No | Circle Modular Wallets client key (passkey wallet for merchants) |
+| `VITE_CLIENT_URL` | No | Circle Modular Wallets endpoint (default: `https://modular-sdk.circle.com/v1/rpc/w3s/buidl`) |
+| `VITE_WALLETCONNECT_PROJECT_ID` | No | WalletConnect project ID |
+| `RPC_PROXY_BASE_URL` | No | Arc Studio RPC proxy (injected automatically inside Arc Studio) |
+| `RPC_PROXY_TOKEN` | No | Arc Studio RPC proxy token (injected automatically inside Arc Studio) |
+| `RPC_PROXY_CHAINS` | No | Arc Studio RPC proxy chain list (injected automatically inside Arc Studio) |
 
 ---
 
-## Security Checklist
+## Troubleshooting
 
-- **Router address allow-listed:** pay page reads `VITE_ROUTER_ADDRESS` from build env, validates `r` param in URL equals this address. Never trusts URL router param.
-- **URL params validated:** every param length-capped, addresses checksummed, amounts checked >0, chain ID checked == 5042002, invoice ID checked == 32 bytes hex, deadline checked in future.
-- **name/memo rendered as text:** no `dangerouslySetInnerHTML`.
-- **Invoice IDs cryptographically random:** `crypto.getRandomValues(32 bytes)`.
-- **Approvals exact-amount:** never infinite approve. Skips approve when allowance is already sufficient.
-- **Chain ID checked before every write:** wagmi chainId check + auto-switch prompt.
-- **No private keys in web app:** merchant app only knows a receiving address and watches the chain.
-- **PAID only after onchain verification:** log verified (invoiceId, merchant, amount >= requested, not removed) + `isPaid()` cross-check.
+**Wallet cannot switch to Arc Testnet**  
+Add the network manually in your wallet (see "Getting Testnet USDC" above). MetaMask and Rabby support custom networks. Rabby on mobile may hang on the transaction screen for unknown chains until the network is added.
 
-### Known Limitations
+**QR code will not scan**  
+Ensure the merchant screen is at maximum brightness. The QR is always rendered dark-on-white. Try increasing the charge screen font size by zooming out. If the customer's camera app doesn't open the URL, copy-paste the link manually.
 
-- Testnet only; unaudited contract
-- A physical attacker who swaps a QR sticker could direct payments to a different address. Mitigated by showing the full merchant address to the customer before signing.
-- NFC write ("tap tag to open payment") is **not** contactless payment — it just opens the payment URL. Requires Android Chrome + NDEFReader API.
-- No refunds; no multi-token; no fiat conversion (see Future Work).
+**Watcher shows offline / PAID never appears**  
+Check network connectivity. The watcher reconnects automatically on `online` and `visibilitychange` events. If the merchant tab was backgrounded, bringing it to the foreground triggers a backfill. The watcher polls every 2 seconds as a fallback even when WebSocket is active.
 
----
+**NFC permission denied**  
+NFC requires a user gesture (tap) to initiate on Android. The app requests permission on first use — if denied, go to Android Settings → Apps → Chrome → Permissions → NFC and enable it.
 
-## 60-Second Demo Script
+**iOS install steps (Add to Home Screen)**  
+1. Open `settl-sable.vercel.app` in Safari
+2. Tap the Share button (square with arrow)
+3. Scroll down and tap **Add to Home Screen**
+4. The app opens in standalone mode with no browser chrome
 
-1. Open the app on your phone and tap **Set up Settl**
-2. Paste your Arc Testnet wallet address (get one from MetaMask) and tap **Start Accepting Payments**
-3. Type `1.00` and tap **Charge $1.00 USDC**
-4. A QR code appears — scan it with a second phone (or the same device)
-5. Connect a funded wallet → review invoice → **Approve** → **Pay**
-6. Merchant screen turns green with a chime in about 1 second
-7. Tap **View on ArcScan** for the transaction link
+**"Invalid router address in link"**  
+The QR was generated before `VITE_ROUTER_ADDRESS` was set in the build. Regenerate the invoice from the updated build.
+
+**Privy modal does not open**  
+Ensure `VITE_PRIVY_APP_ID` is set in Vercel's environment variables AND your deployment domain is in the Privy Console → your app → Settings → Allowed domains.
 
 ---
 
-## Future Work (Out of Scope)
+## Future Work
 
-Fiat conversion, refunds, multi-token support, mainnet, user accounts, a backend, fees or revenue share, tipping.
+- EIP-3009 single-signature payment (`payWithAuthorization`) — eliminates one wallet confirmation
+- EIP-5792 batch approve+pay — one confirmation for both steps
+- `simulateContract` pre-flight to surface revert reasons before wallet prompts
+- Smart contract wallet support in Memo path (detect EOA vs SCA, fall back to direct `router.pay()`)
+- Estimated gas fee display on the pay page
+- Fork test against live Arc Testnet USDC
+- Coverage report (target > 95%)
+- Mainnet deployment (requires independent security audit)
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE)
