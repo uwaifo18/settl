@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/logo.svg" alt="Settl" height="48" />
+  <img src="public/logo.svg" alt="Settl — Instant USDC Payments, Built on Arc" width="800" />
 </p>
 
 # Settl — USDC Point-of-Sale on Arc Testnet
