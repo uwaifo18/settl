@@ -5,8 +5,14 @@
 
 import { useState } from 'react'
 import { isAddress } from 'viem'
-import { Store, ChevronRight, Volume2, Zap, RotateCcw } from 'lucide-react'
+import { Store, ChevronRight, Volume2, Zap, RotateCcw, Fingerprint, LogIn, Loader2 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { MerchantSettings } from '@/lib/merchant-store'
+import {
+  registerPasskeyWallet,
+  loginPasskeyWallet,
+  isCircleConfigured,
+} from '@/lib/passkey-wallet'
 
 interface Props {
   onSave: (settings: MerchantSettings) => void
@@ -19,6 +25,52 @@ export default function MerchantSetup({ onSave, existing }: Props) {
   const [soundEnabled, setSoundEnabled] = useState(existing?.soundEnabled ?? true)
   const [hapticsEnabled, setHapticsEnabled] = useState(existing?.hapticsEnabled ?? true)
   const [addressError, setAddressError] = useState('')
+  const [passkeyLoading, setPasskeyLoading] = useState<'register' | 'login' | null>(null)
+  const [passkeyError, setPasskeyError] = useState('')
+
+  async function handleCreateCircleWallet() {
+    setPasskeyError('')
+    setPasskeyLoading('register')
+    try {
+      const addr = await registerPasskeyWallet(name || 'settl-merchant')
+      setAddress(addr)
+      setAddressError('')
+    } catch (err) {
+      const msg = (err as Error)?.message ?? ''
+      if (msg.includes('NotAllowedError') || msg.toLowerCase().includes('cancelled')) {
+        setPasskeyError('Passkey cancelled.')
+      } else if (msg.includes('InvalidStateError')) {
+        setPasskeyError('Passkey already registered — use "Sign in" instead.')
+      } else if (msg.includes('not configured')) {
+        setPasskeyError('Circle Client Key not set up yet.')
+      } else {
+        setPasskeyError('Could not create wallet. Try again.')
+      }
+    } finally {
+      setPasskeyLoading(null)
+    }
+  }
+
+  async function handleLoginCircleWallet() {
+    setPasskeyError('')
+    setPasskeyLoading('login')
+    try {
+      const addr = await loginPasskeyWallet()
+      setAddress(addr)
+      setAddressError('')
+    } catch (err) {
+      const msg = (err as Error)?.message ?? ''
+      if (msg.includes('NotAllowedError') || msg.toLowerCase().includes('cancelled')) {
+        setPasskeyError('Passkey cancelled.')
+      } else if (msg.includes('not configured')) {
+        setPasskeyError('Circle Client Key not set up yet.')
+      } else {
+        setPasskeyError('Could not sign in. Try again.')
+      }
+    } finally {
+      setPasskeyLoading(null)
+    }
+  }
 
   function handlePaste() {
     navigator.clipboard.readText().then(text => {
@@ -64,6 +116,59 @@ export default function MerchantSetup({ onSave, existing }: Props) {
         className="w-full max-w-sm rounded-3xl p-6 shadow-lg"
         style={{ background: 'var(--surface-strong)', border: '1px solid var(--border)' }}
       >
+        {/* Circle passkey wallet */}
+        {isCircleConfigured() && (
+          <div className="mb-5 rounded-2xl p-4" style={{ background: 'var(--surface-muted)', border: '1px solid var(--border)' }}>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--muted)' }}>
+              Circle Wallet
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => { void handleCreateCircleWallet() }}
+                disabled={passkeyLoading !== null}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-semibold text-white disabled:opacity-50"
+                style={{ background: 'var(--accent)' }}
+              >
+                {passkeyLoading === 'register'
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  : <Fingerprint className="h-3.5 w-3.5" />}
+                Create wallet
+              </button>
+              <button
+                type="button"
+                onClick={() => { void handleLoginCircleWallet() }}
+                disabled={passkeyLoading !== null}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-semibold disabled:opacity-50"
+                style={{ background: 'var(--surface)', color: 'var(--ink-2)', border: '1px solid var(--border)' }}
+              >
+                {passkeyLoading === 'login'
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  : <LogIn className="h-3.5 w-3.5" />}
+                Sign in
+              </button>
+            </div>
+            <AnimatePresence>
+              {passkeyError && (
+                <motion.p
+                  initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  className="mt-2 text-xs" style={{ color: 'var(--danger)' }}
+                >
+                  {passkeyError}
+                </motion.p>
+              )}
+              {address && isAddress(address) && (
+                <motion.p
+                  initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  className="mono mt-2 truncate text-xs font-semibold" style={{ color: 'var(--accent)' }}
+                >
+                  Wallet set
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
         {/* Receiving address */}
         <div className="mb-4">
           <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--muted)' }}>
