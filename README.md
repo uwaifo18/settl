@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/logo.svg" alt="Settl" height="48" />
+</p>
+
 # Settl — USDC Point-of-Sale on Arc Testnet
 
 A merchant opens this Progressive Web App, types a USDC amount, and gets a QR code (plus NFC write on supported Android). The customer scans or taps, connects a wallet, and confirms. Arc's sub-second finality and USDC-as-gas mean the merchant screen flips to a big green **PAID** within about a second of the transaction landing. No backend, no custody, no merchant keys on the device.
