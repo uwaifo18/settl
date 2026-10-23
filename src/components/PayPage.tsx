@@ -19,20 +19,7 @@ import TestnetBanner from './TestnetBanner'
 import { decodeInvoiceHash, isInvoiceExpired, formatCountdown, secondsUntilDeadline } from '@/lib/invoice'
 import { formatUsdcDisplay, formatAddress, LARGE_AMOUNT_THRESHOLD } from '@/lib/amount'
 import { buildTxExplorerUrl } from '@/onchain-facts'
-const ROUTER_ABI = [
-  {
-    type: 'function',
-    name: 'pay',
-    stateMutability: 'nonpayable',
-    inputs: [
-      { name: 'invoiceId', type: 'bytes32' },
-      { name: 'merchant', type: 'address' },
-      { name: 'amount', type: 'uint256' },
-      { name: 'deadline', type: 'uint256' },
-    ],
-    outputs: [],
-  },
-] as const
+import { MEMO_CONTRACT_ADDRESS, MEMO_ABI, encodeMemoData, encodePayCalldata } from '@/lib/memo'
 
 const ARC_TESTNET_CHAIN_ID = 5042002
 // Fallback to the deployed address if env var is not set at build time
@@ -58,6 +45,8 @@ function mapRevertError(err: unknown): string {
   if (msg.includes('invalidmerchant')) return 'Invalid merchant address.'
   if (msg.includes('user rejected') || msg.includes('user denied') || msg.includes('4001')) return ''
   if (msg.includes('insufficient')) return 'Insufficient USDC balance. Get testnet USDC from faucet.circle.com.'
+  if (msg.includes('callfrom') || msg.includes('precompile') || msg.includes('smart contract wallet'))
+    return 'This wallet type is not supported for memo payments. Please use MetaMask or Rabby.'
   return 'Transaction failed. Please try again.'
 }
 
@@ -261,11 +250,24 @@ export default function PayPage() {
     setTxPhase('paying')
     setErrorMsg('')
 
+    // Build Memo-wrapped call: Memo.memo(router, pay(...), invoiceId, memoData)
+    const payCalldata = encodePayCalldata(
+      invoice.invoiceId,
+      invoice.merchant,
+      invoice.amount,
+      BigInt(invoice.deadline),
+    )
+    const memoData = encodeMemoData({
+      invoiceId: invoice.invoiceId,
+      amountUsdc: invoice.amount.toString(),
+      note: invoice.memo,
+    })
+
     writePay({
-      address: ROUTER_ADDRESS,
-      abi: ROUTER_ABI,
-      functionName: 'pay',
-      args: [invoice.invoiceId, invoice.merchant, invoice.amount, BigInt(invoice.deadline)],
+      address: MEMO_CONTRACT_ADDRESS,
+      abi: MEMO_ABI,
+      functionName: 'memo',
+      args: [ROUTER_ADDRESS, payCalldata, invoice.invoiceId, memoData],
     }, {
       onSuccess: (hash) => {
         setTxHash(hash)
