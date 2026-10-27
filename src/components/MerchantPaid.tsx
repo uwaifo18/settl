@@ -1,11 +1,11 @@
 /**
- * Full-screen PAID confirmation screen.
- * Shown after onchain event is verified against the invoice.
+ * PAID screen — signature moment, animated check-draw, auto-dismiss ring.
+ * Business logic unchanged.
  */
 
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
-import { CheckCircle, ExternalLink, RotateCcw } from 'lucide-react'
+import { ExternalLink, RotateCcw } from 'lucide-react'
+import { motion, useReducedMotion } from 'framer-motion'
 import { formatUsdcDisplay, formatAddress } from '@/lib/amount'
 import { buildTxExplorerUrl } from '@/onchain-facts'
 import type { PaidLog } from '@/lib/watcher'
@@ -23,136 +23,148 @@ interface Props {
 
 export default function MerchantPaid({ invoice, paidLog, detectedMs, onNewCharge }: Props) {
   const [remaining, setRemaining] = useState(AUTO_DISMISS_SECONDS)
+  const prefersReduced = useReducedMotion()
 
   useEffect(() => {
     const interval = setInterval(() => {
       setRemaining(s => {
-        if (s <= 1) {
-          clearInterval(interval)
-          onNewCharge()
-          return 0
-        }
+        if (s <= 1) { clearInterval(interval); onNewCharge(); return 0 }
         return s - 1
       })
     }, 1000)
     return () => clearInterval(interval)
   }, [onNewCharge])
+
   const txUrl = buildTxExplorerUrl(ARC_TESTNET_CHAIN_ID, paidLog.txHash)
   const wasOverpaid = paidLog.amount > invoice.amount
 
+  // Countdown ring
+  const r = 10
+  const circ = 2 * Math.PI * r
+  const ringOffset = circ * (1 - remaining / AUTO_DISMISS_SECONDS)
+
+  // Check mark path — draws itself
+  const CHECK_PATH = 'M 12 24 L 22 34 L 38 16'
+
   return (
     <motion.div
-      className="flex min-h-dvh flex-col items-center justify-center px-4 py-8"
-      style={{ background: '#16a34a' }}
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
+      className="flex min-h-dvh flex-col items-center justify-center px-5 py-10 safe-top safe-bottom"
+      style={{ background: 'var(--paid)' }}
+      initial={prefersReduced ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
       aria-live="assertive"
       aria-label="Payment received"
     >
-      {/* Check icon */}
+      {/* Animated check circle */}
       <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 0.1, type: 'spring', stiffness: 300, damping: 20 }}
         className="mb-6"
+        initial={prefersReduced ? false : { scale: 0.6, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.32, ease: [0.2, 0, 0, 1] }}
       >
-        <CheckCircle className="h-24 w-24 text-white" strokeWidth={1.5} />
+        <svg width="96" height="96" viewBox="0 0 50 50" fill="none">
+          <circle cx="25" cy="25" r="23" stroke="rgba(255,255,255,0.35)" strokeWidth="2" />
+          <motion.path
+            d={CHECK_PATH}
+            stroke="white"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+            initial={prefersReduced ? false : { pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 0.3, delay: 0.15, ease: 'easeOut' }}
+          />
+        </svg>
       </motion.div>
 
-      {/* PAID label */}
+      {/* PAID */}
       <motion.h1
-        className="display mb-2 text-5xl font-bold text-white"
-        style={{ letterSpacing: '-0.02em' }}
-        initial={{ opacity: 0, y: 10 }}
+        className="mb-2 text-6xl font-extrabold tracking-tight text-white"
+        style={{ letterSpacing: '-0.04em' }}
+        initial={prefersReduced ? false : { opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+        transition={{ duration: 0.2, delay: 0.2 }}
       >
         PAID
       </motion.h1>
 
       {/* Amount */}
       <motion.p
-        className="display mb-1 text-2xl font-semibold text-white/90"
-        initial={{ opacity: 0 }}
+        className="mb-1 tabular-nums text-3xl font-bold text-white/90"
+        style={{ letterSpacing: '-0.02em' }}
+        initial={prefersReduced ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.25 }}
+        transition={{ duration: 0.2, delay: 0.25 }}
       >
         {formatUsdcDisplay(paidLog.amount)}
       </motion.p>
 
-      {/* Overpaid note */}
       {wasOverpaid && (
-        <p className="mb-2 text-sm text-white/75">
-          (Invoice was {formatUsdcDisplay(invoice.amount)})
+        <p className="mb-2 text-sm text-white/70">
+          Invoice was {formatUsdcDisplay(invoice.amount)}
         </p>
       )}
 
       {/* Payer */}
       <motion.div
         className="mb-6 text-center"
-        initial={{ opacity: 0 }}
+        initial={prefersReduced ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
+        transition={{ duration: 0.2, delay: 0.3 }}
       >
-        <p className="text-sm text-white/70">From</p>
+        <p className="text-sm text-white/60">From</p>
         <p className="mono text-sm font-semibold text-white">{formatAddress(paidLog.payer)}</p>
+        {detectedMs !== undefined && (
+          <p className="mt-0.5 text-xs text-white/50">Detected {detectedMs}ms after block</p>
+        )}
       </motion.div>
 
-      {/* Detection time */}
-      {detectedMs !== undefined && (
-        <p className="mb-4 text-xs text-white/60">
-          Detected {detectedMs}ms after block
-        </p>
-      )}
-
-      {/* Explorer link */}
+      {/* Explorer */}
       <a
         href={txUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="mb-8 flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white/90 underline-offset-4 hover:underline"
-        style={{ background: 'rgba(0,0,0,0.15)' }}
+        className="mb-8 flex items-center gap-1.5 rounded-2xl px-5 py-2.5 text-sm font-semibold text-white/90"
+        style={{ background: 'rgba(0,0,0,0.18)', minHeight: '44px' }}
       >
         View on ArcScan
         <ExternalLink className="h-4 w-4" />
       </a>
 
-      {/* New charge button + countdown */}
+      {/* New charge */}
       <button
         type="button"
         onClick={onNewCharge}
-        className="flex items-center gap-2 rounded-2xl bg-white px-8 py-3.5 text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
-        style={{ color: '#16a34a' }}
+        className="flex items-center gap-2 rounded-2xl px-8 py-4 text-base font-bold transition-all active:scale-[0.98]"
+        style={{ background: '#fff', color: 'var(--paid-light)', minHeight: '56px' }}
       >
         <RotateCcw className="h-5 w-5" />
         New charge
       </button>
 
-      {/* Auto-dismiss countdown */}
+      {/* Auto-dismiss ring */}
       <motion.div
         className="mt-5 flex items-center gap-2"
-        initial={{ opacity: 0 }}
+        initial={prefersReduced ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
       >
-        {/* SVG ring */}
-        <svg width="20" height="20" viewBox="0 0 20 20" className="-rotate-90">
-          <circle cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" />
+        <svg width="24" height="24" viewBox="0 0 24 24" className="-rotate-90">
+          <circle cx="12" cy="12" r={r} fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2.5" />
           <circle
-            cx="10" cy="10" r="8"
+            cx="12" cy="12" r={r}
             fill="none"
-            stroke="rgba(255,255,255,0.8)"
-            strokeWidth="2"
-            strokeDasharray={`${2 * Math.PI * 8}`}
-            strokeDashoffset={`${2 * Math.PI * 8 * (1 - remaining / AUTO_DISMISS_SECONDS)}`}
+            stroke="rgba(255,255,255,0.7)"
+            strokeWidth="2.5"
             strokeLinecap="round"
+            strokeDasharray={circ}
+            strokeDashoffset={ringOffset}
             style={{ transition: 'stroke-dashoffset 1s linear' }}
           />
         </svg>
-        <p className="text-xs text-white/60">
-          New charge in {remaining}s
-        </p>
+        <p className="text-xs text-white/60">New charge in {remaining}s</p>
       </motion.div>
     </motion.div>
   )
