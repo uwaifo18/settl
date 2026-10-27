@@ -20,8 +20,13 @@ import { buildTxExplorerUrl, buildAddressExplorerUrl } from '@/onchain-facts'
 import { MEMO_CONTRACT_ADDRESS, MEMO_ABI, encodeMemoData, encodePayCalldata } from '@/lib/memo'
 import SettlLogo from './SettlLogo'
 
-const ARC_TESTNET_CHAIN_ID = 5042002
-const ROUTER_ADDRESS = (import.meta.env.VITE_ROUTER_ADDRESS || '0x6216af3fb64d039b87088f78da38bd641d62b426') as `0x${string}`
+import { IS_MAINNET, activeChain } from '@/config'
+const ARC_CHAIN_ID = activeChain.id
+const ROUTER_ADDRESS = (
+  IS_MAINNET
+    ? (import.meta.env.VITE_MAINNET_ROUTER_ADDRESS as string | undefined) ?? ''
+    : (import.meta.env.VITE_ROUTER_ADDRESS as string | undefined) ?? '0x6216af3fb64d039b87088f78da38bd641d62b426'
+) as `0x${string}`
 const USDC_ADDRESS = '0x3600000000000000000000000000000000000000' as const
 
 /** Group an address into 4-char readable chunks */
@@ -175,14 +180,14 @@ export default function PayPage() {
 
   const { data: usdcBalance } = useReadContract({
     address: USDC_ADDRESS, abi: erc20Abi, functionName: 'balanceOf',
-    args: address ? [address] : undefined, chainId: ARC_TESTNET_CHAIN_ID,
-    query: { enabled: !!address && isConnected && chainId === ARC_TESTNET_CHAIN_ID },
+    args: address ? [address] : undefined, chainId: ARC_CHAIN_ID,
+    query: { enabled: !!address && isConnected && chainId === ARC_CHAIN_ID },
   })
 
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: USDC_ADDRESS, abi: erc20Abi, functionName: 'allowance',
-    args: address ? [address, ROUTER_ADDRESS] : undefined, chainId: ARC_TESTNET_CHAIN_ID,
-    query: { enabled: !!address && !!ROUTER_ADDRESS && isConnected && chainId === ARC_TESTNET_CHAIN_ID },
+    args: address ? [address, ROUTER_ADDRESS] : undefined, chainId: ARC_CHAIN_ID,
+    query: { enabled: !!address && !!ROUTER_ADDRESS && isConnected && chainId === ARC_CHAIN_ID },
   })
 
   const { writeContract: writeApprove, isPending: isApprovePending } = useWriteContract()
@@ -235,7 +240,7 @@ export default function PayPage() {
     })
   }
 
-  const txUrl = txHash ? buildTxExplorerUrl(ARC_TESTNET_CHAIN_ID, txHash) : undefined
+  const txUrl = txHash ? buildTxExplorerUrl(ARC_CHAIN_ID, txHash) : undefined
   const isInvalidLink = decodeResult !== null && !decodeResult.ok && decodeResult.reason !== 'expired'
   const isExpiredLink = (decodeResult !== null && !decodeResult.ok && decodeResult.reason === 'expired') ||
     (invoice !== null && isInvoiceExpired(invoice) && effectivePhase === 'idle')
@@ -298,7 +303,7 @@ export default function PayPage() {
     />
   )
 
-  const wrongNetwork = isConnected && chainId !== ARC_TESTNET_CHAIN_ID
+  const wrongNetwork = isConnected && chainId !== ARC_CHAIN_ID
   const needsWallet = !isConnected
   const currentStep: 1 | 2 = hasEnoughAllowance ? 2 : 1
 
@@ -360,7 +365,7 @@ export default function PayPage() {
                         <Copy className="h-3.5 w-3.5" style={{ color: addrCopied ? 'var(--paid)' : 'var(--text-muted)' }} />
                       </button>
                       <a
-                        href={buildAddressExplorerUrl(ARC_TESTNET_CHAIN_ID, invoice.merchant)}
+                        href={buildAddressExplorerUrl(ARC_CHAIN_ID, invoice.merchant)}
                         target="_blank" rel="noopener noreferrer"
                         className="flex h-8 w-8 items-center justify-center rounded-xl"
                         style={{ background: 'var(--surface-raised)' }}
@@ -435,7 +440,7 @@ export default function PayPage() {
 
           {/* Wrong network */}
           {ready && wrongNetwork && (
-            <button type="button" onClick={() => switchChain({ chainId: ARC_TESTNET_CHAIN_ID })}
+            <button type="button" onClick={() => switchChain({ chainId: ARC_CHAIN_ID })}
               disabled={isSwitching}
               className="w-full rounded-2xl py-4 text-base font-bold text-white transition-all active:scale-[0.98] disabled:opacity-50"
               style={{ background: 'var(--text)', minHeight: '56px' }}>

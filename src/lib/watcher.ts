@@ -16,9 +16,10 @@ import { arcTestnet } from 'viem/chains'
 import { requireChain } from '@/onchain-facts'
 import type { Invoice } from './invoice'
 import { MEMO_CONTRACT_ADDRESS, decodeMemoData } from './memo'
+import { IS_MAINNET } from '@/config'
 
-const ARC_TESTNET_CHAIN_ID = 5042002
-const chain = requireChain(ARC_TESTNET_CHAIN_ID)
+const ACTIVE_CHAIN_ID = IS_MAINNET ? 5042 : 5042002
+const chain = requireChain(ACTIVE_CHAIN_ID)
 
 // ArcTapRouter Paid event ABI item
 const PAID_EVENT = parseAbiItem(
@@ -58,7 +59,7 @@ function makeClient(rpcUrl: string) {
   return createPublicClient({
     chain: {
       ...arcTestnet,
-      id: ARC_TESTNET_CHAIN_ID,
+      id: ACTIVE_CHAIN_ID,
       rpcUrls: {
         default: { http: [rpcUrl], webSocket: [wsUrl] },
         public: { http: [rpcUrl], webSocket: [wsUrl] },

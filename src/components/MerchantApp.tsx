@@ -17,10 +17,14 @@ import { startWatcher, checkIsPaid, type Watcher, type PaidLog } from '@/lib/wat
 import { loadMerchantSettings, saveMerchantSettings, clearMerchantSettings, type MerchantSettings } from '@/lib/merchant-store'
 import { saveHistoryEntry, updateHistoryEntry } from '@/lib/history'
 import { celebratePayment, unlockAudio } from '@/lib/audio'
+import { IS_MAINNET, activeChain } from '@/config'
 
-// Fallback to the deployed address if env var is not set at build time
+// Router address — mainnet address set via VITE_MAINNET_ROUTER_ADDRESS after you deploy
+// Testnet fallback: the deployed ArcTapRouter on Arc Testnet
 const ROUTER_ADDRESS = (
-  import.meta.env.VITE_ROUTER_ADDRESS || '0x6216af3fb64d039b87088f78da38bd641d62b426'
+  IS_MAINNET
+    ? (import.meta.env.VITE_MAINNET_ROUTER_ADDRESS as string | undefined) ?? ''
+    : (import.meta.env.VITE_ROUTER_ADDRESS as string | undefined) ?? '0x6216af3fb64d039b87088f78da38bd641d62b426'
 ) as `0x${string}`
 
 // Base URL for pay links
@@ -79,8 +83,7 @@ export default function MerchantApp() {
     // Record block number for backfill
     try {
       const { createPublicClient, http } = await import('viem')
-      const { arcTestnet } = await import('viem/chains')
-      const client = createPublicClient({ chain: arcTestnet, transport: http() })
+      const client = createPublicClient({ chain: activeChain, transport: http() })
       const blockNumber = await client.getBlockNumber()
       newInvoice.createdBlock = blockNumber
     } catch {
