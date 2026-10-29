@@ -15,6 +15,14 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies (for node_modules/@openzeppelin remapping)
+        run: bun install
+
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
@@ -22,11 +30,9 @@ jobs:
 
       - name: Build contracts
         run: forge build
-        working-directory: .
 
       - name: Test contracts
         run: forge test -vv
-        working-directory: .
 
   frontend:
     name: Frontend (typecheck + lint)
