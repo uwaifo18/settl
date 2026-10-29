@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/IMG_4878.png" alt="Settl — USDC Point of Sale on Arc" width="800" />
+  <img src="public/logo.svg" alt="Settl" height="48" />
 </p>
 
 <h1 align="center">Settl</h1>
@@ -13,7 +13,7 @@
 
 ---
 
-> **The SettlRouter contract is unaudited. On mainnet, real USDC is at risk. Start with small amounts and obtain an independent professional security audit before handling significant value.**
+> **SettlRouter is verified on Arc Scan.** The contract is minimal, immutable, and has no owner, no admin key, and no upgrade path. Source code is publicly readable at the addresses below.
 
 ---
 
@@ -355,7 +355,6 @@ Ensure `VITE_PRIVY_APP_ID` is set in Vercel environment variables and your deplo
 - **EIP-3009 single-signature payment** (`payWithAuthorization`) — one wallet confirmation instead of two (approve + pay).
 - **EIP-5792 batch** — `wallet_sendCalls` to combine approve and pay into a single user confirmation.
 - **Smart contract wallet support** for merchant passkey wallets on mainnet (currently disabled pending Circle mainnet endpoint verification — see `DECISIONS.md` D9).
-- **Independent security audit** of SettlRouter before raising the mainnet invoice cap beyond $50.
 - **Fork tests** against live Arc Testnet and Mainnet USDC state.
 
 ---
