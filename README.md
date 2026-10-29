@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/logo.svg" alt="Settl" height="48" />
+  <img src="public/IMG_4878.png" alt="Settl — USDC Point of Sale on Arc" width="800" />
 </p>
 
 <h1 align="center">Settl</h1>
