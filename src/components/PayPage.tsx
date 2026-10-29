@@ -21,7 +21,7 @@ import { usePrivy } from '@privy-io/react-auth'
 import { erc20Abi, parseAbiItem, decodeEventLog, type Log } from 'viem'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { ExternalLink, AlertTriangle, CheckCircle, Copy, ArrowRight, ShieldAlert } from 'lucide-react'
-import NetworkBanner from './NetworkBanner'
+
 import { decodeInvoiceHash, isInvoiceExpired, formatCountdown, secondsUntilDeadline } from '@/lib/invoice'
 import { formatUsdcDisplay, formatAddress, LARGE_AMOUNT_THRESHOLD } from '@/lib/amount'
 import { explorerTx, explorerAddress, ROUTER_ADDRESS, USDC_ADDRESS, CHAIN_ID, CHAIN_LABEL, NETWORK, HAS_FAUCET } from '@/network'
@@ -181,7 +181,7 @@ function StepIndicator({ step }: { step: 1 | 2 }) {
 function ProblemScreen({ icon, title, body, action }: { icon: React.ReactNode; title: string; body: string; action?: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col safe-top safe-bottom" style={{ background: 'var(--bg)' }}>
-      <NetworkBanner />
+
       <div className="flex flex-1 flex-col items-center justify-center px-5 py-10 text-center">
         <div className="mb-4">{icon}</div>
         <h1 className="mb-2 text-2xl font-bold tracking-tight" style={{ color: 'var(--text)', letterSpacing: '-0.03em' }}>{title}</h1>
@@ -556,7 +556,7 @@ export default function PayPage() {
   if (txPhase === 'success') {
     return (
       <div className="flex min-h-dvh flex-col safe-top safe-bottom" style={{ background: 'var(--bg)' }}>
-        <NetworkBanner />
+  
         <div className="flex flex-1 flex-col items-center justify-center px-5 py-10 text-center">
           <motion.div
             initial={prefersReduced ? false : { scale: 0.6, opacity: 0 }}
@@ -619,7 +619,7 @@ export default function PayPage() {
 
   return (
     <div className="flex min-h-dvh flex-col safe-top safe-bottom" style={{ background: 'var(--bg)' }}>
-      <NetworkBanner />
+
 
       <div className="flex flex-1 flex-col items-center px-5 py-6">
         <div className="w-full max-w-sm space-y-4">

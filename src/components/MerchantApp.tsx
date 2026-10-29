@@ -5,7 +5,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Settings, History } from 'lucide-react'
-import NetworkBanner from './NetworkBanner'
 import MerchantSetup from './MerchantSetup'
 import MerchantCharge from './MerchantCharge'
 import MerchantAwaiting from './MerchantAwaiting'
@@ -200,7 +199,6 @@ function MerchantAppInner() {
   if (screen === 'setup') {
     return (
       <div onClick={unlockAudio}>
-        <NetworkBanner />
         <MerchantSetup existing={settings} onSave={handleSaveSettings} />
       </div>
     )
@@ -209,7 +207,6 @@ function MerchantAppInner() {
   if (screen === 'history') {
     return (
       <div onClick={unlockAudio}>
-        <NetworkBanner />
         <MerchantHistory onBack={() => setScreen('charge')} />
       </div>
     )
@@ -217,7 +214,6 @@ function MerchantAppInner() {
 
   return (
     <div className="relative" onClick={unlockAudio}>
-      <NetworkBanner />
       {/* Toolbar icons — positioned inside the header row */}
       <div className="absolute right-4 top-3 z-10 flex gap-2">
         <button

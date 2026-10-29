@@ -12,7 +12,6 @@ import FeatureRows from './FeatureRows'
 import FAQSection from './FAQSection'
 import CTASection from './CTASection'
 import LandingFooter from './LandingFooter'
-import { COPY } from './copy'
 
 export default function LandingPage() {
   // Per-route <title> and meta description
@@ -24,19 +23,6 @@ export default function LandingPage() {
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100dvh', overflowX: 'hidden' }}>
-      {/* Announcement bar */}
-      <div
-        style={{
-          textAlign: 'center',
-          fontSize: 13,
-          color: 'var(--text-muted)',
-          padding: '10px 16px',
-          borderBottom: '1px solid var(--hairline, #1E1E21)',
-        }}
-      >
-        {COPY.announcementBar}
-      </div>
-
       <LandingHeader />
 
       <main id="main-content">
