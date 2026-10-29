@@ -55,4 +55,6 @@ jobs:
         env:
           VITE_NETWORK: "testnet"
           VITE_ROUTER_ADDRESS: "0x6216af3fb64d039b87088f78da38bd641d62b426"
-          VITE_PRIVY_APP_ID: ${{ secrets.VITE_PRIVY_APP_ID }}
+          # Use the real secret when set; fall back to a placeholder so CI build
+          # succeeds even without the secret configured (Privy only runs in-browser).
+          VITE_PRIVY_APP_ID: ${{ secrets.VITE_PRIVY_APP_ID || 'ci-placeholder' }}
