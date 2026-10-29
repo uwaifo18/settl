@@ -18,12 +18,9 @@ interface Props {
   existing?: MerchantSettings | null
 }
 
-/** Group a hex address into readable 4-char chunks */
-function groupAddress(addr: string): string {
-  const body = addr.slice(2)
-  const chunks: string[] = []
-  for (let i = 0; i < body.length; i += 4) chunks.push(body.slice(i, i + 4))
-  return '0x ' + chunks.join(' ')
+/** Shorten an address to 0xABCD…1234 format */
+function shortAddress(addr: string): string {
+  return addr.slice(0, 6) + '…' + addr.slice(-4)
 }
 
 function Toggle({ on, onToggle, label }: { on: boolean; onToggle: () => void; label: string }) {
@@ -213,14 +210,14 @@ export default function MerchantSetup({ onSave, existing }: Props) {
               </motion.p>
             ) : addrState === 'valid' ? (
               <motion.div key="valid" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="mt-2">
+                className="mt-2 flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--paid)' }}>
                   <CheckCircle className="h-3.5 w-3.5" />
                   Valid address
                 </div>
-                <p className="mono mt-1 break-all text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                  {groupAddress(checksummed)}
-                </p>
+                <span className="mono text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {shortAddress(checksummed)}
+                </span>
               </motion.div>
             ) : addrState === 'invalid' ? (
               <motion.p key="inv" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}

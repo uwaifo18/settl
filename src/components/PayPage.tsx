@@ -233,6 +233,35 @@ export default function PayPage() {
   const countdown = invoice ? secondsUntilDeadline(invoice) : 0
   void tick
 
+  // On mount / reload: if this invoice was already paid, jump straight to success.
+  useEffect(() => {
+    if (!invoice || !publicClient || txPhase !== 'idle') return
+    void (async () => {
+      try {
+        const alreadyPaid = await publicClient.readContract({
+          address: ROUTER_ADDRESS,
+          abi: ROUTER_ABI,
+          functionName: 'isPaid',
+          args: [invoice.merchant, invoice.invoiceId],
+        })
+        if (!alreadyPaid) return
+        // Recover the tx hash for the explorer link
+        try {
+          const logs = await publicClient.getLogs({
+            address: ROUTER_ADDRESS,
+            event: PAID_EVENT,
+            args: { invoiceId: invoice.invoiceId, merchant: invoice.merchant },
+            fromBlock: 'earliest',
+            toBlock: 'latest',
+          })
+          if (logs[0]?.transactionHash) setTxHash(logs[0].transactionHash)
+        } catch { /* non-blocking */ }
+        setTxPhase('success')
+      } catch { /* non-blocking — if RPC fails, let user pay normally */ }
+    })()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoice, publicClient])
+
   // Check if Memo contract has bytecode on this chain (once, on mount)
   useEffect(() => {
     if (memoAvailableRef.current !== null) return
