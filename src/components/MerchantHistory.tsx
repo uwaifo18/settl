@@ -95,7 +95,7 @@ export default function MerchantHistory({ onBack }: Props) {
       <div style={{ borderBottom: '1px solid var(--hairline, #1E1E21)' }}>
         {/* Logo row */}
         <div className="flex items-center justify-center px-5 py-3" style={{ borderBottom: '1px solid var(--hairline, #1E1E21)' }}>
-          <SettlLogo height={36} variant="dark" />
+          <SettlLogo height={36} variant="auto" />
         </div>
         {/* Back + title + export row */}
         <div className="flex items-center gap-3 px-5 py-3">

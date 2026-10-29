@@ -70,13 +70,6 @@ const PAID_EVENT = parseAbiItem(
   'event Paid(bytes32 indexed invoiceId, address indexed merchant, address indexed payer, uint256 amount)'
 )
 
-/** Group an address into 4-char readable chunks */
-function groupAddress(addr: string) {
-  const body = addr.slice(2)
-  const chunks: string[] = []
-  for (let i = 0; i < body.length; i += 4) chunks.push(body.slice(i, i + 4))
-  return '0x ' + chunks.join(' ')
-}
 
 function mapRevertError(err: unknown): string {
   const msg = (err as Error)?.message?.toLowerCase() ?? ''
@@ -633,7 +626,7 @@ export default function PayPage() {
 
           {/* Logo + title */}
           <div className="flex flex-col items-center text-center">
-            <SettlLogo height={36} variant="dark" />
+            <SettlLogo height={36} variant="auto" />
             <h1 className="mt-3 text-2xl font-extrabold tracking-tight" style={{ color: 'var(--text)', letterSpacing: '-0.04em' }}>
               {invoice?.name ?? 'Payment request'}
             </h1>
@@ -669,9 +662,14 @@ export default function PayPage() {
                 <div>
                   <p className="mb-1 text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Paying to</p>
                   <div className="flex items-start justify-between gap-3">
-                    <p className="mono break-all text-xs leading-relaxed" style={{ color: 'var(--text)' }}>
-                      {groupAddress(invoice.merchant)}
-                    </p>
+                    <div>
+                      {invoice.name && (
+                        <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{invoice.name}</p>
+                      )}
+                      <p className="mono text-xs" style={{ color: 'var(--text-muted)' }}>
+                        {invoice.merchant.slice(0, 6)}…{invoice.merchant.slice(-4)}
+                      </p>
+                    </div>
                     <div className="flex gap-1 flex-shrink-0">
                       <button
                         type="button"

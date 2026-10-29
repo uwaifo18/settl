@@ -46,7 +46,7 @@ export default function LandingHeader() {
           }}
         >
           <a href="/app" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-            <SettlLogo height={36} variant="dark" />
+            <SettlLogo height={36} variant="auto" />
           </a>
 
           {/* Desktop nav */}

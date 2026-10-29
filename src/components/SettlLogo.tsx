@@ -6,15 +6,19 @@
 interface Props {
   /** Height in px. Width scales proportionally (~2.4:1 ratio). */
   height?: number
-  /** 'light' = ink on transparent (default), 'dark' = ivory on transparent */
-  variant?: 'light' | 'dark'
+  /**
+   * 'auto' (default) = uses CSS var(--text) / var(--paid) — adapts to light and dark mode.
+   * 'light' = ink (#0B0B0C) — for explicitly light backgrounds.
+   * 'dark'  = ivory (#F4F1EA) — for explicitly dark backgrounds only.
+   */
+  variant?: 'auto' | 'light' | 'dark'
   /** Show wordmark alongside mark (default true) */
   wordmark?: boolean
 }
 
-export default function SettlLogo({ height = 40, variant = 'light', wordmark = true }: Props) {
-  const ink   = variant === 'dark' ? '#F4F1EA' : '#0B0B0C'
-  const green = variant === 'dark' ? '#35D49A' : '#14A06B'
+export default function SettlLogo({ height = 40, variant = 'auto', wordmark = true }: Props) {
+  const ink   = variant === 'dark' ? '#F4F1EA' : variant === 'light' ? '#0B0B0C' : 'var(--text)'
+  const green = variant === 'dark' ? '#35D49A' : variant === 'light' ? '#14A06B' : 'var(--paid)'
 
   // Ring: center (30,30), radius 22, stroke 6 — bolder at all sizes
   const cx = 30

@@ -47,7 +47,7 @@ export default function MerchantCharge({ merchantName, onCharge, isCreating }: P
         className="flex items-center justify-between px-5 py-4"
         style={{ borderBottom: '1px solid var(--hairline, #1E1E21)' }}
       >
-        <SettlLogo height={36} variant="dark" />
+        <SettlLogo height={36} variant="auto" />
         {merchantName ? (
           <span
             className="text-xs font-semibold uppercase tracking-widest"

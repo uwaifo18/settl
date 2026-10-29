@@ -113,7 +113,7 @@ export default function MerchantSetup({ onSave, existing }: Props) {
         className="flex items-center justify-center px-5 py-4"
         style={{ borderBottom: '1px solid var(--hairline, #1E1E21)' }}
       >
-        <SettlLogo height={36} variant="dark" />
+        <SettlLogo height={36} variant="auto" />
       </div>
 
       <div className="flex flex-1 flex-col items-center justify-center px-4 py-10">
