@@ -6,7 +6,7 @@
 
 import { useState } from 'react'
 import { isAddress, getAddress } from 'viem'
-import { Volume2, Zap, RotateCcw, Fingerprint, LogIn, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { Volume2, Zap, RotateCcw, Fingerprint, LogIn, CheckCircle, XCircle, AlertCircle, Bell } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import SettlLogo from './SettlLogo'
 import type { MerchantSettings } from '@/lib/merchant-store'
@@ -252,37 +252,45 @@ export default function MerchantSetup({ onSave, existing }: Props) {
           <p className="mt-1 text-right text-xs" style={{ color: 'var(--text-muted)' }}>{name.length}/32</p>
         </div>
 
-        {/* Toggles */}
-        <div className="mb-8 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Volume2 className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />
-              <div>
-                <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>Payment chime</p>
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Plays on PAID</p>
+        {/* Notifications — only shown in Settings (existing), not on first-run setup */}
+        {existing && (
+          <div className="mb-8">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+              <Bell className="inline-block h-3.5 w-3.5 mr-1.5 -mt-0.5" />
+              Notifications
+            </p>
+            <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--hairline, #1E1E21)' }}>
+              <div className="flex items-center justify-between px-4 py-4" style={{ background: 'var(--surface)' }}>
+                <div className="flex items-center gap-3">
+                  <Volume2 className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>Payment chime</p>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Plays a sound on PAID</p>
+                  </div>
+                </div>
+                <Toggle on={soundEnabled} onToggle={() => setSoundEnabled(v => !v)} label="Toggle payment chime" />
+              </div>
+              <div className="flex items-center justify-between px-4 py-4" style={{ background: 'var(--surface)', borderTop: '1px solid var(--hairline, #1E1E21)' }}>
+                <div className="flex items-center gap-3">
+                  <Zap className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>Haptic buzz</p>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Vibrates on PAID</p>
+                  </div>
+                </div>
+                <Toggle on={hapticsEnabled} onToggle={() => setHapticsEnabled(v => !v)} label="Toggle haptic feedback" />
               </div>
             </div>
-            <Toggle on={soundEnabled} onToggle={() => setSoundEnabled(v => !v)} label="Toggle payment chime" />
           </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Zap className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />
-              <div>
-                <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>Haptic buzz</p>
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Vibrates on PAID</p>
-              </div>
-            </div>
-            <Toggle on={hapticsEnabled} onToggle={() => setHapticsEnabled(v => !v)} label="Toggle haptic feedback" />
-          </div>
-        </div>
+        )}
 
         {/* Primary action */}
         <button
           type="button"
           onClick={handleSave}
           disabled={!isValid}
-          className="w-full rounded-2xl py-4 text-sm font-bold text-black transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-30"
-          style={{ background: 'var(--paid)', minHeight: '56px' }}
+          className="w-full rounded-2xl py-4 text-sm font-bold text-black transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-30 mb-0"
+          style={{ background: 'var(--paid)', minHeight: '56px', marginTop: existing ? 0 : '2rem' }}
         >
           {existing ? 'Save changes' : 'This is my address'}
         </button>
