@@ -52,5 +52,7 @@ run_step() {
 
 run_step lint bun run lint
 run_step typecheck bun run typecheck
+run_step "unit-tests" bun run test
+run_step "forge-test" forge test
 
 exit "${fail}"

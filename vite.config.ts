@@ -13,12 +13,13 @@ export default defineConfig({
       manifest: {
         name: 'Settl — USDC Point of Sale',
         short_name: 'Settl',
-        description: 'Accept USDC payments on Arc Testnet. No backend, no custody.',
+        description: 'A USDC point of sale for merchants on Arc. Type an amount, show a code, and your screen turns green in about a second.',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/',
-        background_color: '#ffffff',
-        theme_color: '#122d45',
+        start_url: '/app',
+        scope: '/',
+        background_color: '#0B0B0C',
+        theme_color: '#0B0B0C',
         icons: [
           { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml' },
           { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },

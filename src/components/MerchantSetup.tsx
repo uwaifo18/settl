@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import SettlLogo from './SettlLogo'
 import type { MerchantSettings } from '@/lib/merchant-store'
 import { registerPasskeyWallet, loginPasskeyWallet, isCircleConfigured } from '@/lib/passkey-wallet'
+import { NETWORK, CHAIN_LABEL } from '@/network'
 
 interface Props {
   onSave: (settings: MerchantSettings) => void
@@ -108,16 +109,21 @@ export default function MerchantSetup({ onSave, existing }: Props) {
     trimmed === '' ? 'idle' : isValid ? 'valid' : 'invalid'
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center px-4 py-10 safe-top safe-bottom" style={{ background: 'var(--bg)' }}>
+    <div className="flex min-h-dvh flex-col safe-top safe-bottom" style={{ background: 'var(--bg)' }}>
 
-      {/* Logo */}
-      <div className="mb-8">
-        <SettlLogo height={36} />
+      {/* Header */}
+      <div
+        className="flex items-center justify-center px-5 py-4"
+        style={{ borderBottom: '1px solid var(--hairline, #1E1E21)' }}
+      >
+        <SettlLogo height={36} variant="dark" />
       </div>
+
+      <div className="flex flex-1 flex-col items-center justify-center px-4 py-10">
 
       {/* Card */}
       <div className="w-full max-w-sm">
-        <h1 className="mb-1 text-2xl font-bold tracking-tight" style={{ color: 'var(--text)', letterSpacing: '-0.03em' }}>
+        <h1 className="mb-1 text-2xl font-extrabold tracking-tight" style={{ color: 'var(--text)', letterSpacing: '-0.04em' }}>
           {existing ? 'Settings' : 'Set up Settl'}
         </h1>
         <p className="mb-6 text-sm" style={{ color: 'var(--text-muted)' }}>
@@ -135,8 +141,8 @@ export default function MerchantSetup({ onSave, existing }: Props) {
                 type="button"
                 onClick={() => { void handleCreateCircleWallet() }}
                 disabled={passkeyLoading !== null}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-white transition-all active:scale-95 disabled:opacity-50"
-                style={{ background: 'var(--text)', minHeight: '48px' }}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-black transition-all active:scale-95 disabled:opacity-50"
+                style={{ background: 'var(--paid)', minHeight: '48px' }}
               >
                 {passkeyLoading === 'register'
                   ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -275,8 +281,8 @@ export default function MerchantSetup({ onSave, existing }: Props) {
           type="button"
           onClick={handleSave}
           disabled={!isValid}
-          className="w-full rounded-2xl py-4 text-sm font-bold text-white transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-30"
-          style={{ background: 'var(--text)', minHeight: '56px' }}
+          className="w-full rounded-2xl py-4 text-sm font-bold text-black transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-30"
+          style={{ background: 'var(--paid)', minHeight: '56px' }}
         >
           {existing ? 'Save changes' : 'This is my address'}
         </button>
@@ -295,10 +301,11 @@ export default function MerchantSetup({ onSave, existing }: Props) {
         )}
       </div>
 
-      {/* Testnet notice */}
-      <p className="mt-8 text-xs" style={{ color: 'var(--text-muted)' }}>
-        TESTNET — no real funds
+      {/* Network notice */}
+      <p className="mt-8 text-xs" style={{ color: NETWORK === 'mainnet' ? 'var(--warn)' : 'var(--text-muted)' }}>
+        {NETWORK === 'mainnet' ? `${CHAIN_LABEL} · real USDC` : `${CHAIN_LABEL} · no real funds`}
       </p>
-    </div>
+      </div>
+      </div>
   )
 }

@@ -1,0 +1,13 @@
+{
+  "contractName": "SettlRouter",
+  "note": "Deployed on-chain as ArcTapRouter; source renamed to SettlRouter.sol in v2. On-chain bytecode is identical.",
+  "routerSourceFile": "contracts/SettlRouter.sol",
+  "chainId": 5042,
+  "network": "arc-mainnet",
+  "router": "0xaC6ae5A67Ded7804104008B7Ec0F46Dd3472038F",
+  "usdc": "0x3600000000000000000000000000000000000000",
+  "explorerUrl": "https://explorer.arc.io/address/0xaC6ae5A67Ded7804104008B7Ec0F46Dd3472038F",
+  "txHash": "OWNER TO FILL — run: cast receipt <TX_HASH> --rpc-url https://rpc.mainnet.arc.io",
+  "block": "OWNER TO FILL — read from deploy receipt blockNumber",
+  "deployedAt": "OWNER TO FILL — ISO 8601 timestamp of deployment"
+}

@@ -1,12 +1,14 @@
 /**
  * IndexedDB invoice history using idb-keyval.
- * Stores up to 500 entries. Capped at 500 with oldest removed.
+ * Stores up to 500 entries per network. Testnet and mainnet records never mix.
  */
 
 import { get, set } from 'idb-keyval'
 import type { HistoryEntry } from './invoice'
+import { NETWORK } from '@/network'
 
-const HISTORY_KEY = 'settl:history:v1'
+/** Key is network-scoped so testnet and mainnet records never mix. */
+const HISTORY_KEY = `settl:history:v2:${NETWORK}`
 const MAX_ENTRIES = 500
 
 export async function loadHistory(): Promise<HistoryEntry[]> {
@@ -53,15 +55,16 @@ export async function clearHistory(): Promise<void> {
 
 /**
  * Export history as CSV string.
- * Columns: date, status, amount (USDC), merchant, payer, tx_hash
+ * Columns: date, network, status, amount (USDC), merchant, payer, tx_hash, invoice_id
  */
 export function exportHistoryCSV(history: HistoryEntry[]): string {
-  const header = 'date,status,amount_usdc,merchant,payer,tx_hash,invoice_id\n'
+  const header = 'date,network,status,amount_usdc,merchant,payer,tx_hash,invoice_id\n'
   const rows = history.map(h => {
     const date = new Date(h.createdAt).toISOString()
     const amount = h.invoice.amount ? (Number(h.invoice.amount) / 1_000_000).toFixed(6) : ''
     return [
       date,
+      h.invoice.network ?? NETWORK,
       h.status,
       amount,
       h.invoice.merchant,

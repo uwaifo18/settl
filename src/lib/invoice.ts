@@ -4,8 +4,7 @@
  */
 
 import { isAddress } from 'viem'
-
-export const ARC_TESTNET_CHAIN_ID = 5042002
+import { CHAIN_ID, CHAIN_LABEL, ROUTER_ADDRESS, MAX_INVOICE_USDC, NETWORK } from '@/network'
 
 export interface Invoice {
   v: 1
@@ -15,7 +14,8 @@ export interface Invoice {
   deadline: number               // unix seconds
   name?: string                  // business name, max 32 chars
   memo?: string                  // memo, max 64 chars
-  chainId: 5042002
+  chainId: number                // active chain ID (5042 mainnet | 5042002 testnet)
+  network: 'mainnet' | 'testnet' // explicit network tag for history isolation
   createdBlock?: bigint          // merchant-side only, for log backfill
   routerAddress: `0x${string}`   // baked-in router address
 }
@@ -65,7 +65,8 @@ export function createInvoice(params: {
     deadline: now + (params.deadlineSeconds ?? 600),
     name: params.name?.slice(0, 32),
     memo: params.memo?.slice(0, 64),
-    chainId: ARC_TESTNET_CHAIN_ID,
+    chainId: CHAIN_ID,
+    network: NETWORK,
     routerAddress: params.routerAddress,
   }
 }
@@ -97,15 +98,18 @@ export interface DecodeResult {
 
 export interface DecodeError {
   ok: false
-  reason: 'missing_param' | 'bad_address' | 'bad_amount' | 'bad_chain' | 'bad_invoice_id' | 'expired' | 'bad_router' | 'bad_deadline'
+  reason: 'missing_param' | 'bad_address' | 'bad_amount' | 'bad_chain' | 'bad_invoice_id' | 'expired' | 'bad_router' | 'bad_deadline' | 'amount_cap'
   message: string
 }
 
 /**
  * Decode and validate invoice from URL hash fragment.
- * bakedinRouterAddress: the router address baked into the build — never trust URL's r param.
+ * bakedInRouterAddress: the router address baked into the build — never trust URL's r param.
  */
-export function decodeInvoiceHash(hash: string, bakedInRouterAddress: `0x${string}`): DecodeResult | DecodeError {
+export function decodeInvoiceHash(
+  hash: string,
+  bakedInRouterAddress: `0x${string}`
+): DecodeResult | DecodeError {
   const raw = hash.startsWith('#') ? hash.slice(1) : hash
   const params = new URLSearchParams(raw)
 
@@ -145,6 +149,16 @@ export function decodeInvoiceHash(hash: string, bakedInRouterAddress: `0x${strin
     return { ok: false, reason: 'bad_amount', message: 'Payment amount must be greater than zero.' }
   }
 
+  // Enforce invoice cap on mainnet
+  if (amount > MAX_INVOICE_USDC) {
+    const capUsdc = (Number(MAX_INVOICE_USDC) / 1_000_000).toFixed(2)
+    return {
+      ok: false,
+      reason: 'amount_cap',
+      message: `This payment link exceeds the maximum invoice amount of ${capUsdc} USDC on ${CHAIN_LABEL}.`,
+    }
+  }
+
   // Validate invoice ID (32 bytes = 64 hex chars + 0x prefix)
   if (!i || !/^0x[0-9a-fA-F]{64}$/.test(i)) {
     return { ok: false, reason: 'bad_invoice_id', message: 'Invalid invoice ID.' }
@@ -156,13 +170,21 @@ export function decodeInvoiceHash(hash: string, bakedInRouterAddress: `0x${strin
   }
   const deadline = parseInt(d, 10)
   const now = Math.floor(Date.now() / 1000)
-  if (deadline <= now) {
+  // Add a 30-second clock-skew grace: the contract uses block.timestamp <= deadline,
+  // so a device clock that is up to 30s ahead would reject a link the chain would still accept.
+  const CLOCK_SKEW_GRACE = 30
+  if (deadline <= now - CLOCK_SKEW_GRACE) {
     return { ok: false, reason: 'expired', message: 'This payment link has expired.' }
   }
 
-  // Validate chain ID
-  if (!c || parseInt(c, 10) !== ARC_TESTNET_CHAIN_ID) {
-    return { ok: false, reason: 'bad_chain', message: `This link is for a different network (expected Arc Testnet, chain ${ARC_TESTNET_CHAIN_ID}).` }
+  // Validate chain ID — must match the active chain for this build
+  if (!c || parseInt(c, 10) !== CHAIN_ID) {
+    const linkChain = c ? parseInt(c, 10) : 'unknown'
+    return {
+      ok: false,
+      reason: 'bad_chain',
+      message: `This link is for a different network (chain ${linkChain}). Expected ${CHAIN_LABEL} (chain ${CHAIN_ID}).`,
+    }
   }
 
   // Cap name/memo lengths
@@ -179,14 +201,18 @@ export function decodeInvoiceHash(hash: string, bakedInRouterAddress: `0x${strin
       deadline,
       name,
       memo,
-      chainId: ARC_TESTNET_CHAIN_ID,
+      chainId: CHAIN_ID,
+      network: NETWORK,
       routerAddress: r,
     },
   }
 }
 
+/** 30-second clock-skew grace so a device clock ahead by ≤30s doesn't block a valid payment. */
+const CLOCK_SKEW_GRACE_S = 30
+
 export function isInvoiceExpired(invoice: Invoice): boolean {
-  return Math.floor(Date.now() / 1000) > invoice.deadline
+  return Math.floor(Date.now() / 1000) > invoice.deadline + CLOCK_SKEW_GRACE_S
 }
 
 export function secondsUntilDeadline(invoice: Invoice): number {
@@ -199,3 +225,6 @@ export function formatCountdown(seconds: number): string {
   const s = seconds % 60
   return `${m}:${s.toString().padStart(2, '0')}`
 }
+
+// Re-export for callers that used the old constant
+export { ROUTER_ADDRESS as BAKED_IN_ROUTER_ADDRESS }

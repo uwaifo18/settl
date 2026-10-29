@@ -1,5 +1,5 @@
 /**
- * Awaiting payment screen — QR hero, countdown ring, settled-point status dot.
+ * Awaiting payment screen — landing-matched dark aesthetic.
  * Business logic unchanged.
  */
 
@@ -7,6 +7,7 @@ import { useEffect, useState, useRef } from 'react'
 import { Copy, Share2, Smartphone, WifiOff } from 'lucide-react'
 import { motion } from 'framer-motion'
 import QRDisplay from './QRDisplay'
+import SettlLogo from './SettlLogo'
 import { formatUsdc, formatAddress } from '@/lib/amount'
 import { formatCountdown, secondsUntilDeadline, type Invoice } from '@/lib/invoice'
 import { requestWakeLock, releaseWakeLock } from '@/lib/wakelock'
@@ -18,7 +19,7 @@ interface Props {
 }
 
 const NFC_SUPPORTED = 'NDEFReader' in window
-const TOTAL_SECONDS = 10 * 60 // default invoice duration — used for ring %
+const TOTAL_SECONDS = 10 * 60
 
 export default function MerchantAwaiting({ invoice, payUrl, onCancel }: Props) {
   const [countdown, setCountdown] = useState(secondsUntilDeadline(invoice))
@@ -29,24 +30,14 @@ export default function MerchantAwaiting({ invoice, payUrl, onCancel }: Props) {
   const [showCancelSheet, setShowCancelSheet] = useState(false)
   const cancelTriggerRef = useRef<HTMLButtonElement>(null)
 
-  // Wake lock
-  useEffect(() => {
-    void requestWakeLock()
-    return () => releaseWakeLock()
-  }, [])
-
-  // Countdown timer
+  useEffect(() => { void requestWakeLock(); return () => releaseWakeLock() }, [])
   useEffect(() => {
     const interval = setInterval(() => setCountdown(secondsUntilDeadline(invoice)), 1000)
     return () => clearInterval(interval)
   }, [invoice])
-
-  // Online/offline
   useEffect(() => {
-    const on = () => setIsOnline(true)
-    const off = () => setIsOnline(false)
-    window.addEventListener('online', on)
-    window.addEventListener('offline', off)
+    const on = () => setIsOnline(true); const off = () => setIsOnline(false)
+    window.addEventListener('online', on); window.addEventListener('offline', off)
     return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off) }
   }, [])
 
@@ -54,14 +45,12 @@ export default function MerchantAwaiting({ invoice, payUrl, onCancel }: Props) {
     try { await navigator.clipboard.writeText(payUrl); setCopied(true); setTimeout(() => setCopied(false), 2000) }
     catch { /* ignore */ }
   }
-
   async function handleShare() {
     if (navigator.share) {
       try { await navigator.share({ title: `Pay ${formatUsdc(invoice.amount)} USDC`, url: payUrl }) }
       catch { void handleCopy() }
     } else { void handleCopy() }
   }
-
   async function handleNFCWrite() {
     if (!NFC_SUPPORTED) return
     setNfcStatus('writing'); setNfcError('')
@@ -69,15 +58,12 @@ export default function MerchantAwaiting({ invoice, payUrl, onCancel }: Props) {
       const NDEFReaderClass = (window as unknown as { NDEFReader: new() => { write(msg: unknown): Promise<void> } }).NDEFReader
       const ndef = new NDEFReaderClass()
       await ndef.write({ records: [{ recordType: 'url', data: payUrl }] })
-      setNfcStatus('done')
-      setTimeout(() => setNfcStatus('idle'), 3000)
+      setNfcStatus('done'); setTimeout(() => setNfcStatus('idle'), 3000)
     } catch (err: unknown) {
-      setNfcStatus('error')
-      setNfcError((err as Error).message ?? 'NFC write failed')
+      setNfcStatus('error'); setNfcError((err as Error).message ?? 'NFC write failed')
     }
   }
 
-  // Countdown ring
   const ringRadius = 28
   const ringCirc = 2 * Math.PI * ringRadius
   const ringPct = Math.max(0, countdown / TOTAL_SECONDS)
@@ -95,71 +81,94 @@ export default function MerchantAwaiting({ invoice, payUrl, onCancel }: Props) {
         </div>
       )}
 
-      {/* Amount */}
-      <div className="px-5 pt-6 text-center">
-        <p className="mb-1 text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
+      {/* Logo header */}
+      <div
+        className="flex items-center justify-center px-5 py-3"
+        style={{ borderBottom: '1px solid var(--hairline, #1E1E21)' }}
+      >
+        <SettlLogo height={36} variant="dark" />
+      </div>
+
+      {/* Amount header */}
+      <div
+        className="px-5 pt-5 pb-4 text-center"
+        style={{ borderBottom: '1px solid var(--hairline, #1E1E21)' }}
+      >
+        <p className="mb-1 text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
           {invoice.name ?? 'Awaiting payment'}
         </p>
         <div className="flex items-baseline justify-center gap-2" aria-live="polite">
-          <span className="tabular-nums text-5xl font-extrabold tracking-tight" style={{ color: 'var(--text)', letterSpacing: '-0.04em' }}>
+          <span
+            className="tabular-nums font-extrabold tracking-tight"
+            style={{ color: 'var(--text)', fontSize: '3rem', letterSpacing: '-0.04em' }}
+          >
             {formatUsdc(invoice.amount)}
           </span>
-          <span className="text-xl font-semibold" style={{ color: 'var(--text-muted)' }}>USDC</span>
+          <span className="text-xl font-semibold" style={{ color: 'var(--paid)' }}>USDC</span>
         </div>
         {invoice.memo && (
           <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>{invoice.memo}</p>
         )}
       </div>
 
-      {/* QR hero — white card */}
+      {/* QR card — dark surface with white QR inset */}
       <div className="flex flex-1 items-center justify-center px-5 py-4">
-        <div className="w-full max-w-xs rounded-3xl p-5" style={{ background: '#fff', border: '1px solid var(--border)' }}>
-          <QRDisplay url={payUrl} size={240} />
+        <div
+          className="w-full max-w-xs rounded-3xl p-5"
+          style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+        >
+          {/* White inset for QR contrast */}
+          <div className="rounded-2xl p-3" style={{ background: '#fff' }}>
+            <QRDisplay url={payUrl} size={240} />
+          </div>
+
+          {/* Merchant address row inside card */}
+          <div className="mt-4 rounded-2xl px-3 py-2.5" style={{ background: 'var(--bg)' }}>
+            <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>
+              Paying to{' '}
+              <span className="mono font-semibold" style={{ color: 'var(--text)' }}>
+                {formatAddress(invoice.merchant)}
+              </span>
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Status line */}
-      <div className="flex items-center justify-center gap-2 pb-3" aria-live="polite">
-        <motion.span
-          className="h-2 w-2 rounded-full"
-          style={{ background: isOnline ? 'var(--paid)' : 'var(--text-muted)' }}
-          animate={isOnline ? { opacity: [1, 0.3, 1] } : { opacity: 1 }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        />
-        <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
-          {isOnline ? 'Waiting for payment…' : 'Offline'}
-        </span>
-      </div>
-
-      {/* Countdown ring */}
-      <div className="flex items-center justify-center gap-3 pb-4">
-        <svg width="64" height="64" viewBox="0 0 64 64" className="-rotate-90">
-          <circle cx="32" cy="32" r={ringRadius} fill="none" stroke="var(--border)" strokeWidth="3" />
-          <circle
-            cx="32" cy="32" r={ringRadius}
-            fill="none"
-            stroke={isWarning ? 'var(--warn)' : 'var(--paid)'}
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeDasharray={ringCirc}
-            strokeDashoffset={ringCirc * (1 - ringPct)}
-            style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.3s' }}
+      {/* Status + countdown row */}
+      <div className="flex items-center justify-between px-5 pb-3">
+        <div className="flex items-center gap-2" aria-live="polite">
+          <motion.span
+            className="h-2 w-2 rounded-full"
+            style={{ background: isOnline ? 'var(--paid)' : 'var(--text-muted)' }}
+            animate={isOnline ? { opacity: [1, 0.3, 1] } : { opacity: 1 }}
+            transition={{ duration: 1.5, repeat: Infinity }}
           />
-        </svg>
-        <span
-          className="mono text-xl font-semibold tabular-nums"
-          style={{ color: isWarning ? 'var(--warn)' : 'var(--text-muted)' }}
-        >
-          {formatCountdown(countdown)}
-        </span>
-      </div>
+          <span className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
+            {isOnline ? 'Waiting…' : 'Offline'}
+          </span>
+        </div>
 
-      {/* Merchant address */}
-      <div className="mx-5 mb-4 rounded-2xl px-4 py-3 text-center" style={{ background: 'var(--surface)' }}>
-        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Paying to</p>
-        <p className="mono text-xs font-semibold" style={{ color: 'var(--text)' }}>
-          {formatAddress(invoice.merchant)}
-        </p>
+        <div className="flex items-center gap-2">
+          <svg width="32" height="32" viewBox="0 0 64 64" className="-rotate-90" aria-hidden="true">
+            <circle cx="32" cy="32" r={ringRadius} fill="none" stroke="var(--border)" strokeWidth="3" />
+            <circle
+              cx="32" cy="32" r={ringRadius}
+              fill="none"
+              stroke={isWarning ? 'var(--warn)' : 'var(--paid)'}
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray={ringCirc}
+              strokeDashoffset={ringCirc * (1 - ringPct)}
+              style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.3s' }}
+            />
+          </svg>
+          <span
+            className="mono text-sm font-semibold tabular-nums"
+            style={{ color: isWarning ? 'var(--warn)' : 'var(--text-muted)' }}
+          >
+            {formatCountdown(countdown)}
+          </span>
+        </div>
       </div>
 
       {/* Action row */}
@@ -217,16 +226,16 @@ export default function MerchantAwaiting({ invoice, payUrl, onCancel }: Props) {
         </button>
       </div>
 
-      {/* Cancel confirmation sheet */}
+      {/* Cancel sheet */}
       {showCancelSheet && (
         <div
           className="fixed inset-0 z-50 flex items-end"
-          style={{ background: 'rgba(0,0,0,0.6)' }}
+          style={{ background: 'rgba(0,0,0,0.72)' }}
           onClick={() => setShowCancelSheet(false)}
         >
           <div
             className="w-full rounded-t-3xl p-6"
-            style={{ background: 'var(--surface)' }}
+            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
             onClick={e => e.stopPropagation()}
           >
             <h2 className="mb-1 text-base font-bold" style={{ color: 'var(--text)' }}>Cancel this invoice?</h2>

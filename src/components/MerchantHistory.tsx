@@ -5,12 +5,12 @@
 
 import { useEffect, useState } from 'react'
 import { ExternalLink, Download, ArrowLeft, CheckCircle, Clock, XCircle, AlertCircle, Receipt } from 'lucide-react'
+import SettlLogo from './SettlLogo'
 import { loadHistory, exportHistoryCSV } from '@/lib/history'
+import { reconcileHistory } from '@/lib/watcher'
 import { formatUsdc, formatAddress } from '@/lib/amount'
-import { buildTxExplorerUrl } from '@/onchain-facts'
+import { explorerTx } from '@/network'
 import type { HistoryEntry } from '@/lib/invoice'
-
-const ARC_TESTNET_CHAIN_ID = 5042002
 
 const STATUS_META: Record<HistoryEntry['status'], { label: string; color: string; bg: string; icon: React.ReactNode }> = {
   paid:      { label: 'Paid',      color: 'var(--paid)',      bg: 'rgba(53,212,154,0.12)', icon: <CheckCircle className="h-3.5 w-3.5" /> },
@@ -63,7 +63,12 @@ export default function MerchantHistory({ onBack }: Props) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    void loadHistory().then(h => { setEntries(h); setLoading(false) })
+    // Reconcile stale awaiting entries first, then reload the list
+    reconcileHistory()
+      .catch(() => { /* best-effort */ })
+      .finally(() => {
+        void loadHistory().then(h => { setEntries(h); setLoading(false) })
+      })
   }, [])
 
   const [now] = useState(() => Date.now())
@@ -87,28 +92,35 @@ export default function MerchantHistory({ onBack }: Props) {
     <div className="flex min-h-dvh flex-col safe-top safe-bottom" style={{ background: 'var(--bg)' }}>
 
       {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex h-10 w-10 items-center justify-center rounded-xl transition-all active:scale-95"
-          style={{ background: 'var(--surface)', minHeight: '44px', minWidth: '44px' }}
-          aria-label="Back"
-        >
-          <ArrowLeft className="h-4 w-4" style={{ color: 'var(--text)' }} />
-        </button>
-        <h1 className="flex-1 text-base font-bold" style={{ color: 'var(--text)' }}>History</h1>
-        <button
-          type="button"
-          onClick={handleExport}
-          disabled={entries.length === 0}
-          className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-all active:scale-95 disabled:opacity-40"
-          style={{ background: 'var(--surface)', color: 'var(--text-muted)', minHeight: '44px' }}
-          aria-label="Export CSV"
-        >
-          <Download className="h-3.5 w-3.5" />
-          Export
-        </button>
+      <div style={{ borderBottom: '1px solid var(--hairline, #1E1E21)' }}>
+        {/* Logo row */}
+        <div className="flex items-center justify-center px-5 py-3" style={{ borderBottom: '1px solid var(--hairline, #1E1E21)' }}>
+          <SettlLogo height={36} variant="dark" />
+        </div>
+        {/* Back + title + export row */}
+        <div className="flex items-center gap-3 px-5 py-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex h-10 w-10 items-center justify-center rounded-xl transition-all active:scale-95"
+            style={{ background: 'var(--surface)', minHeight: '44px', minWidth: '44px' }}
+            aria-label="Back"
+          >
+            <ArrowLeft className="h-4 w-4" style={{ color: 'var(--text)' }} />
+          </button>
+          <h1 className="flex-1 text-base font-extrabold tracking-tight" style={{ color: 'var(--text)', letterSpacing: '-0.02em' }}>History</h1>
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={entries.length === 0}
+            className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-all active:scale-95 disabled:opacity-40"
+            style={{ background: 'var(--surface)', color: 'var(--text-muted)', minHeight: '44px' }}
+            aria-label="Export CSV"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Export
+          </button>
+        </div>
       </div>
 
       {/* Today summary */}
@@ -145,7 +157,7 @@ export default function MerchantHistory({ onBack }: Props) {
                 <li
                   key={entry.invoice.invoiceId}
                   className="flex items-start gap-3 rounded-2xl px-4 py-4"
-                  style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+                  style={{ background: 'var(--surface)', border: '1px solid var(--hairline, #1E1E21)' }}
                 >
                   {/* Status icon */}
                   <div
@@ -182,7 +194,7 @@ export default function MerchantHistory({ onBack }: Props) {
 
                   {entry.txHash && (
                     <a
-                      href={buildTxExplorerUrl(ARC_TESTNET_CHAIN_ID, entry.txHash)}
+                      href={explorerTx(entry.txHash)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex-shrink-0 flex h-9 w-9 items-center justify-center rounded-xl"
