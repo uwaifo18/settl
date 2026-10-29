@@ -27,7 +27,13 @@ export default defineConfig({
           { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
+      // Force the new service worker to activate immediately (skipWaiting)
+      // instead of waiting for all tabs to close. Combined with clientsClaim,
+      // this means a redeployed app shows instantly on the next page load
+      // rather than persisting the old cached version in Chrome.
       workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4 MiB — Privy bundle is ~2.1 MiB
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
