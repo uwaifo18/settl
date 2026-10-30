@@ -11,7 +11,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import SettlLogo from './SettlLogo'
 import type { MerchantSettings } from '@/lib/merchant-store'
 import { registerPasskeyWallet, loginPasskeyWallet, isCircleConfigured } from '@/lib/passkey-wallet'
-import { NETWORK, CHAIN_LABEL } from '@/network'
 
 interface Props {
   onSave: (settings: MerchantSettings) => void
@@ -306,10 +305,6 @@ export default function MerchantSetup({ onSave, existing }: Props) {
         )}
       </div>
 
-      {/* Network notice */}
-      <p className="mt-8 text-xs" style={{ color: NETWORK === 'mainnet' ? 'var(--warn)' : 'var(--text-muted)' }}>
-        {NETWORK === 'mainnet' ? `${CHAIN_LABEL} · real USDC` : `${CHAIN_LABEL} · no real funds`}
-      </p>
       </div>
       </div>
   )
