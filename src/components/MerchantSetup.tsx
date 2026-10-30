@@ -6,11 +6,12 @@
 
 import { useState } from 'react'
 import { isAddress, getAddress } from 'viem'
-import { Volume2, Zap, RotateCcw, Fingerprint, LogIn, CheckCircle, XCircle, AlertCircle, Bell } from 'lucide-react'
+import { Volume2, Zap, RotateCcw, Fingerprint, LogIn, CheckCircle, XCircle, AlertCircle, Bell, Sun, Moon } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import SettlLogo from './SettlLogo'
 import type { MerchantSettings } from '@/lib/merchant-store'
 import { registerPasskeyWallet, loginPasskeyWallet, isCircleConfigured } from '@/lib/passkey-wallet'
+import { getThemePreference, setThemePreference, type ThemePreference } from '@/lib/theme'
 
 interface Props {
   onSave: (settings: MerchantSettings) => void
@@ -48,6 +49,7 @@ export default function MerchantSetup({ onSave, existing }: Props) {
   const [name, setName] = useState(existing?.name ?? '')
   const [soundEnabled, setSoundEnabled] = useState(existing?.soundEnabled ?? true)
   const [hapticsEnabled, setHapticsEnabled] = useState(existing?.hapticsEnabled ?? true)
+  const [theme, setTheme] = useState<ThemePreference>(() => getThemePreference())
   const [addressError, setAddressError] = useState('')
   const [passkeyLoading, setPasskeyLoading] = useState<'register' | 'login' | null>(null)
   const [passkeyError, setPasskeyError] = useState('')
@@ -247,6 +249,38 @@ export default function MerchantSetup({ onSave, existing }: Props) {
           />
           <p className="mt-1 text-right text-xs" style={{ color: 'var(--text-muted)' }}>{name.length}/32</p>
         </div>
+
+        {/* Appearance — only shown in Settings */}
+        {existing && (
+          <div className="mb-6">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+              <Sun className="inline-block h-3.5 w-3.5 mr-1.5 -mt-0.5" />
+              Appearance
+            </p>
+            <div className="flex gap-2">
+              {(['dark', 'light'] as ThemePreference[]).map((t) => {
+                const active = theme === t
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => { setTheme(t); setThemePreference(t) }}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-all active:scale-95"
+                    style={{
+                      background: active ? 'var(--paid)' : 'var(--surface)',
+                      color: active ? '#0B0B0C' : 'var(--text)',
+                      border: `1px solid ${active ? 'transparent' : 'var(--hairline, #1E1E21)'}`,
+                      minHeight: '48px',
+                    }}
+                  >
+                    {t === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                    {t === 'dark' ? 'Dark' : 'Light'}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Notifications — only shown in Settings (existing), not on first-run setup */}
         {existing && (
