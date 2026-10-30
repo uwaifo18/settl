@@ -14,9 +14,9 @@ export const COPY = {
   },
 
   hero: {
-    h1First: 'Get paid before',
-    h1Muted: 'the receipt prints.',
-    sub: 'A USDC point of sale built for merchants. Type an amount, show a QR code, and your screen turns green \u2014 usually within a second.',
+    h1First: 'Get paid in USDC.',
+    h1Muted: 'Know it landed.',
+    sub: 'A point of sale for merchants. Type an amount, show a code, and your customer scans and pays. Your screen turns green once it\u2019s confirmed, usually within a second.',
     ctaPrimary: 'Open Settl',
     // No demo section yet \u2014 button hidden
   },
