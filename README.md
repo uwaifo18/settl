@@ -17,6 +17,14 @@
 
 ---
 
+## The problem
+
+Accepting crypto at a physical counter is harder than it should be. Most tools are custodial — the provider holds your money until they release it. Others require a separate gas token the merchant and customer both have to obtain and manage. And most confirmation times are too slow for a counter interaction: 10–30 seconds is an eternity when someone is standing at your till.
+
+Settl fixes all three. Non-custodial. USDC-only. One second.
+
+---
+
 ## What is Settl?
 
 Settl is a non-custodial USDC point-of-sale progressive web app built on **Arc** — a blockchain where USDC is the native gas token. It is designed for merchants who want to accept crypto payments without a terminal, a backend, or an intermediary.
@@ -28,6 +36,15 @@ Settl is a non-custodial USDC point-of-sale progressive web app built on **Arc**
 3. The merchant's screen turns green — usually within one second of the transaction landing on-chain.
 
 No accounts. No custody. No backend. No gas token other than USDC. Funds go straight from the customer's wallet to the merchant's wallet address.
+
+---
+
+## Who it's for
+
+- **Market traders and street vendors** who want to accept USDC without a bank account or payment processor
+- **Cafes and small retailers** looking for a crypto checkout that settles instantly and charges no percentage fee
+- **Event organisers and pop-up shops** — install the PWA on any phone, type an amount, done
+- **Developers** who want to fork a minimal, auditable, non-custodial payment contract and build on top of it
 
 ---
 
@@ -351,11 +368,38 @@ Ensure `VITE_PRIVY_APP_ID` is set in Vercel environment variables and your deplo
 
 ## Future work
 
-- **StableFX / offramp** — after a payment lands, let the merchant convert USDC to local currency (USD, EUR, NGN, etc.) and withdraw to a bank account or mobile money wallet, directly from the history screen. No CEX required. Candidates: Circle Payouts API, Transak, MoonPay Business, Yellow Card (African markets).
-- **EIP-3009 single-signature payment** (`payWithAuthorization`) — one wallet confirmation instead of two (approve + pay).
-- **EIP-5792 batch** — `wallet_sendCalls` to combine approve and pay into a single user confirmation.
-- **Smart contract wallet support** for merchant passkey wallets on mainnet (currently disabled pending Circle mainnet endpoint verification — see `DECISIONS.md` D9).
+### Payments
+- **EIP-3009 single-signature payment** (`payWithAuthorization`) — one wallet confirmation instead of two (approve + pay). The customer signs a message offline; the merchant broadcasts it. Eliminates the approve step entirely.
+- **EIP-5792 batch** — `wallet_sendCalls` to combine approve and pay into a single user operation for wallets that support it.
+- **Recurring payments** — scheduled invoices for subscriptions, rent, retainers. The merchant sets an amount and cadence; the contract pulls on schedule with pre-authorised allowance.
+- **Split payments** — one invoice, multiple recipients, defined percentages. Useful for marketplaces, tip splits, and revenue shares.
+
+### Offramp
+- **StableFX / local currency offramp** — after a payment lands, let the merchant convert USDC to local currency (USD, EUR, NGN, GHS, KES, etc.) and withdraw to a bank account or mobile money wallet directly from the history screen. No CEX required. Candidates: Circle Payouts API, Transak, MoonPay Business, Yellow Card (African markets).
+
+### Infrastructure
+- **Smart contract wallet support** for merchant passkey wallets on mainnet (currently disabled pending Circle mainnet endpoint verification).
+- **Multi-currency support** — accept EURC or other Circle-supported stablecoins alongside USDC, with automatic conversion display.
+- **Webhook notifications** — push a payment event to a merchant's backend the moment a transaction confirms, for order management integrations.
 - **Fork tests** against live Arc Testnet and Mainnet USDC state.
+- **Agent payments** — expose Settl invoices as a machine-readable endpoint so AI agents can pay merchants programmatically via the x402 protocol.
+
+---
+
+## Contributing
+
+Settl is open source under MIT. To contribute:
+
+```bash
+git clone https://github.com/uwaifo18/settl
+cd settl
+bun install
+bun run dev
+```
+
+Before opening a PR, run `bun run check` (lint + typecheck + unit tests) and `forge test -vv` (contract tests). Both must pass with zero errors.
+
+For significant changes — new contract functions, changes to the invoice format, or modifications to the payment verification flow — open an issue first to discuss the approach.
 
 ---
 
@@ -365,4 +409,6 @@ MIT — see [LICENSE](LICENSE)
 
 ---
 
-Built with [Arc Studio](https://studio.arc.io)
+## Built by
+
+[@aisuskii](https://x.com/aisuskii?s=11) · Built with [Arc Studio](https://studio.arc.io)
