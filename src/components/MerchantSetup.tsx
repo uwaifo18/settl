@@ -126,7 +126,7 @@ export default function MerchantSetup({ onSave, existing, onBack }: Props) {
             <ArrowLeft className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />
           </button>
         )}
-        <SettlLogo height={36} variant="auto" />
+        <SettlLogo height={36} variant="auto" href="/" />
       </div>
 
       <div className="flex flex-1 flex-col items-center justify-center px-4 py-10">

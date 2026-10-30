@@ -63,7 +63,7 @@ export default function MerchantPaid({ invoice, paidLog, detectedMs, onNewCharge
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
       >
-        <SettlLogo height={36} variant="light" />
+        <SettlLogo height={36} variant="light" href="/" />
       </motion.div>
 
       {/* Check circle */}

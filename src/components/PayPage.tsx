@@ -626,7 +626,7 @@ export default function PayPage() {
 
           {/* Logo + title */}
           <div className="flex flex-col items-center text-center">
-            <SettlLogo height={36} variant="auto" />
+            <SettlLogo height={36} variant="auto" href="/" />
             <h1 className="mt-3 text-2xl font-extrabold tracking-tight" style={{ color: 'var(--text)', letterSpacing: '-0.04em' }}>
               {invoice?.name ?? 'Payment request'}
             </h1>

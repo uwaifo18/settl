@@ -86,7 +86,7 @@ export default function MerchantAwaiting({ invoice, payUrl, onCancel }: Props) {
         className="flex items-center justify-center px-5 py-3"
         style={{ borderBottom: '1px solid var(--hairline, #1E1E21)' }}
       >
-        <SettlLogo height={36} variant="auto" />
+        <SettlLogo height={36} variant="auto" href="/" />
       </div>
 
       {/* Amount header */}

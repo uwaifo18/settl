@@ -14,9 +14,11 @@ interface Props {
   variant?: 'auto' | 'light' | 'dark'
   /** Show wordmark alongside mark (default true) */
   wordmark?: boolean
+  /** If set, wraps the logo in an anchor tag */
+  href?: string
 }
 
-export default function SettlLogo({ height = 40, variant = 'auto', wordmark = true }: Props) {
+export default function SettlLogo({ height = 40, variant = 'auto', wordmark = true, href }: Props) {
   const ink   = variant === 'dark' ? '#F4F1EA' : variant === 'light' ? '#0B0B0C' : 'var(--text)'
   const green = variant === 'dark' ? '#35D49A' : variant === 'light' ? '#14A06B' : 'var(--paid)'
 
@@ -56,7 +58,7 @@ export default function SettlLogo({ height = 40, variant = 'auto', wordmark = tr
 
   const scale = height / totalH
 
-  return (
+  const svg = (
     <svg
       width={totalW * scale}
       height={height}
@@ -93,4 +95,14 @@ export default function SettlLogo({ height = 40, variant = 'auto', wordmark = tr
       )}
     </svg>
   )
+
+  if (href) {
+    return (
+      <a href={href} style={{ display: 'inline-flex', alignItems: 'center' }} aria-label="Settl home">
+        {svg}
+      </a>
+    )
+  }
+
+  return svg
 }
