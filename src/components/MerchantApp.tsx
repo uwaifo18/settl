@@ -199,7 +199,7 @@ function MerchantAppInner() {
   if (screen === 'setup') {
     return (
       <div onClick={unlockAudio}>
-        <MerchantSetup existing={settings} onSave={handleSaveSettings} />
+        <MerchantSetup existing={settings} onSave={handleSaveSettings} onBack={settings ? () => setScreen('charge') : undefined} />
       </div>
     )
   }

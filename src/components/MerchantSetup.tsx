@@ -6,7 +6,7 @@
 
 import { useState } from 'react'
 import { isAddress, getAddress } from 'viem'
-import { Volume2, Zap, RotateCcw, Fingerprint, LogIn, CheckCircle, XCircle, AlertCircle, Bell, Sun, Moon } from 'lucide-react'
+import { Volume2, Zap, RotateCcw, Fingerprint, LogIn, CheckCircle, XCircle, AlertCircle, Bell, Sun, Moon, ArrowLeft } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import SettlLogo from './SettlLogo'
 import type { MerchantSettings } from '@/lib/merchant-store'
@@ -16,6 +16,7 @@ import { getThemePreference, setThemePreference, type ThemePreference } from '@/
 interface Props {
   onSave: (settings: MerchantSettings) => void
   existing?: MerchantSettings | null
+  onBack?: () => void
 }
 
 /** Shorten an address to 0xABCD…1234 format */
@@ -44,7 +45,7 @@ function Toggle({ on, onToggle, label }: { on: boolean; onToggle: () => void; la
   )
 }
 
-export default function MerchantSetup({ onSave, existing }: Props) {
+export default function MerchantSetup({ onSave, existing, onBack }: Props) {
   const [address, setAddress] = useState(existing?.address ?? '')
   const [name, setName] = useState(existing?.name ?? '')
   const [soundEnabled, setSoundEnabled] = useState(existing?.soundEnabled ?? true)
@@ -111,9 +112,20 @@ export default function MerchantSetup({ onSave, existing }: Props) {
 
       {/* Header */}
       <div
-        className="flex items-center justify-center px-5 py-4"
+        className="relative flex items-center justify-center px-5 py-4"
         style={{ borderBottom: '1px solid var(--hairline, #1E1E21)' }}
       >
+        {existing && onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="absolute left-4 flex h-10 w-10 items-center justify-center rounded-xl transition-all active:scale-95"
+            style={{ background: 'var(--surface)', border: '1px solid var(--hairline, #1E1E21)' }}
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />
+          </button>
+        )}
         <SettlLogo height={36} variant="auto" />
       </div>
 
