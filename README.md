@@ -13,7 +13,7 @@
 
 ---
 
-> **SettlRouter is verified on Arc Scan.** The contract is minimal, immutable, and has no owner, no admin key, and no upgrade path. Source code is publicly readable at the addresses below.
+> **SettlRouter is verified on Arc Scan.** The contract is minimal and immutable. Source code is publicly readable at the addresses below.
 
 ---
 
