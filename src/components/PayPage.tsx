@@ -118,13 +118,14 @@ function ActionButton({ onClick, disabled, phase, isApprovePending, isApproveCon
   hasEnoughAllowance: boolean; amount: bigint
 }) {
   const isWaiting = phase === 'simulating' || phase === 'approving' || isApprovePending || phase === 'paying' || isPayPending
-  const isConfirming = phase === 'pendingApprove' || isApproveConfirming || phase === 'pendingPay' || isPayConfirming || phase === 'verifying'
+  const isConfirming = phase === 'pendingPay' || isPayConfirming
 
   let label: React.ReactNode
   if (phase === 'simulating') label = <><PulsingDots /><span className="ml-2">Checking…</span></>
-  else if (phase === 'verifying') label = <><PulsingDots /><span className="ml-2">Verifying payment…</span></>
+  else if (phase === 'verifying') label = <><PulsingDots /><span className="ml-2">Verifying…</span></>
   else if (isWaiting) label = <><PulsingDots /><span className="ml-2">Confirm in wallet…</span></>
-  else if (isConfirming) label = <><PulsingDots /><span className="ml-2">{phase === 'pendingApprove' || isApproveConfirming ? 'Approving…' : `Confirming on ${CHAIN_LABEL}…`}</span></>
+  else if (phase === 'pendingApprove' || isApproveConfirming) label = <><PulsingDots /><span className="ml-2">Approving…</span></>
+  else if (isConfirming) label = <><PulsingDots /><span className="ml-2">Sending…</span></>
   else if (!hasEnoughAllowance) label = `Approve ${formatUsdcDisplay(amount)}`
   else label = `Pay ${formatUsdcDisplay(amount)}`
 
